@@ -75,7 +75,7 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
   const cards = [
     { label: "Valor Total", value: formatUSD(valorTotal), desc: "Valor atual de liquidez em todas as pools" },
     { label: "Total Investido", value: formatUSD(totalInvestido), desc: "Investimento inicial em todas as pools" },
-    { label: "Ganhos Totais", value: formatUSD(ganhosTotais), desc: "Taxas combinadas de todas as pools" },
+    { label: "Taxas Totais", value: formatUSD(ganhosTotais), desc: "Taxas combinadas de todas as pools" },
     { label: "P&L Total", value: formatUSD(pnlTotal), desc: "Lucro/perda combinado de todas as pools" },
     { label: "Rendimento Est.", value: rendimentoMedio, desc: "Rendimento médio ponderado", select: true, selectOptions: RENDIMENTO_OPTIONS, selectValue: rendimentoPeriodo, setSelect: setRendimentoPeriodo, selectLabel: "Período do Rendimento:" },
     { label: "Taxas Est.", value: taxasEstFormatted.replace('US$', '$'), desc: "Taxas estimadas ganhas", select: true, selectOptions: TAXAS_OPTIONS, selectValue: taxasPeriodo, setSelect: setTaxasPeriodo, selectLabel: "Período das Taxas:" },
@@ -85,9 +85,11 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full items-start">
         {cards.map((card, idx) => (
+          // Card especial para P&L Total com bg condicional
+
           <div
             key={idx}
-            className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px] h-full items-start justify-start"
+            className={`rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px] h-full items-start justify-start ${card.label === 'P&L Total' ? (pnlTotal > 0 ? 'bg-[#071f14]' : pnlTotal < 0 ? 'bg-[#1f0d07]' : 'bg-[#18181b]') : 'bg-[#18181b]'}`}
             style={{ minHeight: card.select ? 180 : undefined }}
           >
             <span className="text-xs text-[#a1a1aa] font-medium">

@@ -77,16 +77,16 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     <div className="font-semibold text-white">{p.pool}</div>
                     <div className="text-[10px] text-[#a1a1aa]">{p.network} • {p.dex}</div>
                   </td>
-                  <td className="py-2 px-2 text-center">${p.invested.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center">${p.current.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center">${p.uncollected.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center">${p.collected.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center">${calcPNL(p)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.invested.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.current.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.uncollected.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.collected.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${calcPNL(p)}</td>
                   <td className="py-2 px-2 text-center whitespace-nowrap">
   {(() => {
     const apr = calcAPR(p);
     return (
-      <div className="flex flex-col text-xs">
+      <div className="flex flex-col text-xs text-base text-white font-semibold">
         <span><b>D:</b> {apr.daily}</span>
         <span><b>M:</b> {apr.monthly}</span>
         <span><b>A:</b> {apr.annual}</span>

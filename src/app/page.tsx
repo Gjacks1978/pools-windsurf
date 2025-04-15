@@ -52,6 +52,12 @@ export default function Home() {
     setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Cálculos das pools fechadas
+  const pnlTotalFechadas = closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
+  let pnlBg = 'bg-[#18181b]';
+  if (pnlTotalFechadas > 0) pnlBg = 'bg-[#071f14]';
+  if (pnlTotalFechadas < 0) pnlBg = 'bg-[#1f0d07]';
+
   return (
     <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
       <div className="w-full max-w-7xl mb-4">
@@ -70,22 +76,21 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-6">
             {/* Ganhos Totais */}
             <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
-              <span className="text-xs text-[#a1a1aa] font-medium">Ganhos Totais</span>
+              <span className="text-xs text-[#a1a1aa] font-medium">Taxas Totais</span>
               <span className="text-2xl font-semibold text-white">{closedPositions.reduce((acc, p) => acc + p.collected + p.uncollected, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
               <span className="text-xs text-[#71717a]">Taxas combinadas de todas as pools fechadas</span>
             </div>
             {/* P&L Total */}
-            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
+            <div className={`${pnlBg} rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]`}>
               <span className="text-xs text-[#a1a1aa] font-medium">P&L Total</span>
-              <span className="text-2xl font-semibold text-white">{closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
+              <span className="text-2xl font-semibold text-white">{pnlTotalFechadas.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
               <span className="text-xs text-[#71717a]">Lucro/perda combinado de todas as pools fechadas</span>
             </div>
             {/* APR Anual Total % */}
             <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
               <span className="text-xs text-[#a1a1aa] font-medium">APR Anual Total %</span>
-              <span className="text-2xl font-semibold text-white">{
-                (() => {
-                  // Cálculo APR anual total ponderado
+              <span className="text-2xl font-semibold text-white">
+                {(() => {
                   let totalInvestido = 0;
                   let totalPNL = 0;
                   let totalDias = 0;
@@ -106,8 +111,8 @@ export default function Home() {
                     aprAnual = dailyRate * 365 * 100;
                   }
                   return totalInvestido > 0 ? aprAnual.toFixed(2) + '%' : '-';
-                })()
-              }</span>
+                })()}
+              </span>
               <span className="text-xs text-[#71717a]">APR anual médio ponderado das pools fechadas</span>
             </div>
           </div>
