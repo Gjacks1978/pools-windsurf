@@ -66,6 +66,52 @@ export default function Home() {
           <button onClick={() => setTab('open')} className={`px-4 py-1 rounded ${tab==='open' ? 'bg-[#232328] text-white' : 'bg-transparent text-[#a1a1aa]'} text-sm font-semibold`}>Posições abertas ({positions.length})</button>
           <button onClick={() => setTab('closed')} className={`px-4 py-1 rounded ${tab==='closed' ? 'bg-[#232328] text-white' : 'bg-transparent text-[#a1a1aa]'} text-sm font-semibold`}>Posições fechadas ({closedPositions.length})</button>
         </div>
+        {tab === 'closed' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-6">
+            {/* Ganhos Totais */}
+            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
+              <span className="text-xs text-[#a1a1aa] font-medium">Ganhos Totais</span>
+              <span className="text-2xl font-semibold text-white">{closedPositions.reduce((acc, p) => acc + p.collected + p.uncollected, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
+              <span className="text-xs text-[#71717a]">Taxas combinadas de todas as pools fechadas</span>
+            </div>
+            {/* P&L Total */}
+            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
+              <span className="text-xs text-[#a1a1aa] font-medium">P&L Total</span>
+              <span className="text-2xl font-semibold text-white">{closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
+              <span className="text-xs text-[#71717a]">Lucro/perda combinado de todas as pools fechadas</span>
+            </div>
+            {/* APR Anual Total % */}
+            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
+              <span className="text-xs text-[#a1a1aa] font-medium">APR Anual Total %</span>
+              <span className="text-2xl font-semibold text-white">{
+                (() => {
+                  // Cálculo APR anual total ponderado
+                  let totalInvestido = 0;
+                  let totalPNL = 0;
+                  let totalDias = 0;
+                  closedPositions.forEach((p) => {
+                    const dias = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
+                    const invested = p.invested;
+                    if (invested > 0) {
+                      const pnl = p.current + p.collected + p.uncollected - invested;
+                      totalPNL += pnl;
+                      totalInvestido += invested;
+                      totalDias += dias * invested;
+                    }
+                  });
+                  const diasMedio = totalInvestido > 0 ? totalDias / totalInvestido : 1;
+                  let aprAnual = 0;
+                  if (totalInvestido > 0) {
+                    const dailyRate = totalPNL / totalInvestido / diasMedio;
+                    aprAnual = dailyRate * 365 * 100;
+                  }
+                  return totalInvestido > 0 ? aprAnual.toFixed(2) + '%' : '-';
+                })()
+              }</span>
+              <span className="text-xs text-[#71717a]">APR anual médio ponderado das pools fechadas</span>
+            </div>
+          </div>
+        )}
         {tab === 'open' ? (
           <PositionsTable positions={positions} onRemove={handleRemove} onClosePosition={handleClosePosition} onDuplicate={handleDuplicate} onEdit={handleEdit} closed={false} />
         ) : (
