@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useState } from "react";
 import { DashboardCards } from "../components/DashboardCards";
 import { PositionsTable } from "../components/PositionsTable";
@@ -6,8 +7,60 @@ import { TrackByAddress } from "../components/TrackByAddress";
 import { AddPositionModal, Position } from "../components/AddPositionModal";
 
 export default function Home() {
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [closedPositions, setClosedPositions] = useState<Position[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
+  const [importError, setImportError] = useState<string|null>(null);
+
+  // Exporta dados como JSON
+  function handleExport() {
+    const data = {
+      positions,
+      closedPositions
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'pools-dashboard-backup.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  // Importa dados de arquivo JSON
+  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(evt.target?.result as string);
+        if (!data.positions || !data.closedPositions) throw new Error('Arquivo inválido');
+        setPositions(data.positions);
+        setClosedPositions(data.closedPositions);
+        setImportError(null);
+      } catch (err: any) {
+        setImportError('Arquivo inválido ou corrompido');
+      }
+    };
+    reader.readAsText(file);
+    // Limpa input para permitir importar o mesmo arquivo novamente se necessário
+    e.target.value = '';
+  }
+  const [positions, setPositions] = useState<Position[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('positions');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [closedPositions, setClosedPositions] = useState<Position[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('closedPositions');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [tab, setTab] = useState<'open'|'closed'>('open');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number|null>(null);
@@ -52,6 +105,24 @@ export default function Home() {
     setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Persistência LocalStorage
+  // Salva positions sempre que mudar
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('positions', JSON.stringify(positions));
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 1200);
+    }
+  }, [positions]);
+  // Salva closedPositions sempre que mudar
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('closedPositions', JSON.stringify(closedPositions));
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 1200);
+    }
+  }, [closedPositions]);
+
   // Cálculos das pools fechadas
   const pnlTotalFechadas = closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
   let pnlBg = 'bg-[#18181b]';
@@ -60,6 +131,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
+      {/* Aviso de dados salvos */}
+      {showSaved && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
+          Dados salvos!
+        </div>
+      )}
+      {/* Aviso de erro de importação */}
+      {importError && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-red-700 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
+          {importError}
+        </div>
+      )}
+      {/* Botões de exportação/importação */}
+      <div className="w-full max-w-7xl flex justify-end gap-2 mb-2">
+        <button onClick={handleExport} className="px-3 py-1 rounded bg-[#232328] text-white text-xs font-semibold border border-[#39393f] hover:bg-[#39393f]">Exportar Backup</button>
+        <label className="px-3 py-1 rounded bg-[#232328] text-white text-xs font-semibold border border-[#39393f] hover:bg-[#39393f] cursor-pointer">
+          Importar Backup
+          <input type="file" accept="application/json" className="hidden" onChange={handleImport} />
+        </label>
+      </div>
       <div className="w-full max-w-7xl mb-4">
         <div className="font-bold text-white text-3xl md:text-4xl mb-4">Dashboard de Pools de Liquidez</div>
         <DashboardCards positions={positions} />

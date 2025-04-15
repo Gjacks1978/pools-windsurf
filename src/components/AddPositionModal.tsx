@@ -7,12 +7,13 @@ export type Position = {
   uncollected: number;
   collected: number;
 
-  rangeMin: number;
-  rangeMax: number;
+  rangeMin?: number;
+  rangeMax?: number;
   entryPrice?: number;
   network: string;
   dex: string;
   created: string; // ISO string
+  observacoes?: string;
 };
 
 const NETWORKS = ["Ethereum", "Arbitrum", "Polygon", "BSC", "Optimism", "Base", "Sui", "Solana"];
@@ -33,6 +34,14 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
   onAdd: (position: Position) => void;
   initialData?: Position | null;
 }) {
+  const getCurrentDateTimeLocal = () => {
+    const now = new Date();
+    now.setSeconds(0, 0); // Zera os segundos e ms
+    const offset = now.getTimezoneOffset();
+    const local = new Date(now.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+  };
+
   const [form, setForm] = useState<Position>(initialData ?? {
     pool: "",
     invested: 0,
@@ -44,7 +53,8 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
     entryPrice: undefined,
     network: NETWORKS[0],
     dex: DEXES_BY_NETWORK[NETWORKS[0]][0],
-    created: new Date().toISOString(),
+    created: getCurrentDateTimeLocal(),
+    observacoes: '',
   });
 
   // Atualiza form ao abrir o modal ou ao mudar initialData
@@ -64,7 +74,8 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
           entryPrice: undefined,
           network: NETWORKS[0],
           dex: DEXES_BY_NETWORK[NETWORKS[0]][0],
-          created: "2025-04-15T17:30:05-03:00",
+          created: getCurrentDateTimeLocal(),
+          observacoes: '',
         });
       }
     }
@@ -79,7 +90,7 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.network]);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -153,12 +164,12 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
 
         <div className="flex gap-2">
           <div className="flex-1 flex flex-col">
-            <label className="text-sm text-[#a1a1aa]">Range Mínimo</label>
-            <input name="rangeMin" type="number" placeholder="Range Mínimo" value={form.rangeMin} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" required />
+            <label className="text-sm text-[#a1a1aa]">Range Mínimo (opcional)</label>
+            <input name="rangeMin" type="number" placeholder="Range Mínimo" value={form.rangeMin ?? ''} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" />
           </div>
           <div className="flex-1 flex flex-col">
-            <label className="text-sm text-[#a1a1aa]">Range Máximo</label>
-            <input name="rangeMax" type="number" placeholder="Range Máximo" value={form.rangeMax} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" required />
+            <label className="text-sm text-[#a1a1aa]">Range Máximo (opcional)</label>
+            <input name="rangeMax" type="number" placeholder="Range Máximo" value={form.rangeMax ?? ''} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" />
           </div>
         </div>
 
@@ -166,8 +177,45 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
         <input name="entryPrice" type="number" placeholder="Preço de Entrada (opcional)" value={form.entryPrice ?? ""} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" />
 
 
+        <label className="text-sm text-[#a1a1aa]">Observações (opcional)</label>
+        <textarea
+          name="observacoes"
+          placeholder="Observações sobre a posição"
+          value={form.observacoes ?? ''}
+          onChange={handleChange}
+          className="px-3 py-2 rounded bg-[#232328] text-white text-sm w-full min-h-[60px] resize-y"
+        />
+
         <label className="text-sm text-[#a1a1aa]">Data de Criação</label>
-        <input name="created" type="datetime-local" value={form.created.slice(0, 16)} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm w-full" />
+        <div
+          className="relative w-full cursor-pointer group"
+          tabIndex={0}
+          onClick={e => {
+            const input = document.getElementById('created-input') as HTMLInputElement;
+            if (input) input.showPicker ? input.showPicker() : input.focus();
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              const input = document.getElementById('created-input') as HTMLInputElement;
+              if (input) input.showPicker ? input.showPicker() : input.focus();
+            }
+          }}
+        >
+          <input
+            id="created-input"
+            name="created"
+            type="datetime-local"
+            value={form.created.slice(0, 16)}
+            onChange={handleChange}
+            className="px-3 py-2 rounded bg-[#232328] text-white text-sm w-full border-2 border-[#232328] group-focus-within:border-blue-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-600 transition-all outline-none cursor-pointer"
+            style={{ minHeight: 44 }}
+            step="60"
+            // step="60" força escolha por minuto
+          />
+          <span className="absolute left-2 top-2 text-[#a1a1aa] pointer-events-none select-none text-xs">
+            {form.created ? '' : 'Selecione a data e hora'}
+          </span>
+        </div>
 
         <div className="flex gap-2 mt-3">
           <button type="button" onClick={onClose} className="flex-1 py-2 rounded bg-[#232328] text-white text-base">Cancelar</button>
