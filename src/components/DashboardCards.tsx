@@ -19,74 +19,53 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
   const ganhosTotais = positions.reduce((acc, p) => acc + p.collected + p.uncollected, 0);
   const pnlTotal = positions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
 
-  // Rendimento simples médio ponderado por período
-  // Cálculo correto de rendimento estimado com juros simples:
-  let totalPNL = 0;
-  let totalInvestidoRend = 0;
-  let totalDias = 0;
-  let taxasEst = 0; // soma simples
-  positions.forEach((p, idx) => {
-    // Debug: Mostra todos os valores relevantes para cada pool
-    console.log(`[DEBUG] Pool ${idx+1}: invested=${p.invested}, current=${p.current}, collected=${p.collected}, uncollected=${p.uncollected}, created=${p.created}`);
-    const dias = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
+  // --- Cálculo Refatorado para Rendimento Est. e Taxas Est. ---
+
+  let totalFees = 0;
+  let totalInvestedDays = 0;
+  let totalDailyFeesAccumulated = 0; // Para Taxas Est.
+
+  positions.forEach((p) => {
+    const days = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
     const invested = p.invested;
+    const fees = p.collected + p.uncollected;
+
     if (invested > 0) {
-      const pnl = p.current + p.collected + p.uncollected - invested;
-      totalPNL += pnl;
-      totalInvestidoRend += invested;
-      totalDias += dias * invested;
-      // Taxas estimadas soma simples
-      const taxasDiarias = (p.collected + p.uncollected) / dias;
-      let taxasProj = 0;
-      if (taxasPeriodo === "Diário") taxasProj = taxasDiarias;
-      else if (taxasPeriodo === "Mensal") taxasProj = taxasDiarias * 30;
-      else taxasProj = taxasDiarias * 365;
-      taxasEst += taxasProj;
+      totalFees += fees;
+      totalInvestedDays += invested * days;
+    }
+    if (days > 0) {
+       totalDailyFeesAccumulated += fees / days;
     }
   });
-  // Se não houver posições, retorno padrão
-  let rendimentoMedio = "0.00%";
-  if (positions.length > 0) {
-    // Se só tem uma posição, use a lógica exata do calcAPR (incluindo uncollected)
-    if (positions.length === 1) {
-      const p = positions[0];
-      const invested = p.invested;
-      if (invested && invested !== 0) {
-        const pnl = p.current + p.collected + p.uncollected - invested;
-        const days = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
-        const dailyRate = pnl / invested / days;
-        let rate = 0;
-        if (rendimentoPeriodo === "Diário") rate = dailyRate * 100;
-        else if (rendimentoPeriodo === "Mensal") rate = dailyRate * 30 * 100;
-        else rate = dailyRate * 365 * 100;
-        rendimentoMedio = rate.toFixed(2) + "%";
-      }
-    } else {
-      // Média ponderada para múltiplas posições
-      let totalPNL = 0;
-      let totalInvestidoRend = 0;
-      let totalDias = 0;
-      positions.forEach((p) => {
-        const dias = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
-        const invested = p.invested;
-        if (invested > 0) {
-          const pnl = p.current + p.collected + p.uncollected - invested;
-          totalPNL += pnl;
-          totalInvestidoRend += invested;
-          totalDias += dias * invested;
-        }
-      });
-      const diasMedio = totalInvestidoRend > 0 ? totalDias / totalInvestidoRend : 1;
-      let rendimentoSimples = 0;
-      if (totalInvestidoRend > 0) {
-        const dailyRate = totalPNL / totalInvestidoRend / diasMedio;
-        if (rendimentoPeriodo === "Diário") rendimentoSimples = dailyRate * 100;
-        else if (rendimentoPeriodo === "Mensal") rendimentoSimples = dailyRate * 30 * 100;
-        else rendimentoSimples = dailyRate * 365 * 100;
-      }
-      rendimentoMedio = totalInvestidoRend > 0 ? rendimentoSimples.toFixed(2) + "%" : "0.00%";
-    }
+
+  // Cálculo Rendimento Estimado (baseado em taxas)
+  let averageDailyRate = 0;
+  if (totalInvestedDays > 0) {
+    averageDailyRate = totalFees / totalInvestedDays;
   }
+
+  let estimatedYieldRate = 0;
+  if (rendimentoPeriodo === "Diário") {
+    estimatedYieldRate = averageDailyRate * 100;
+  } else if (rendimentoPeriodo === "Mensal") {
+    estimatedYieldRate = averageDailyRate * 30 * 100;
+  } else { // Anual
+    estimatedYieldRate = averageDailyRate * 365 * 100;
+  }
+  const rendimentoMedio = estimatedYieldRate.toFixed(2) + "%";
+
+  // Cálculo Taxas Estimadas (projeção do total diário)
+  let taxasEst = 0;
+  if (taxasPeriodo === "Diário") {
+      taxasEst = totalDailyFeesAccumulated;
+  } else if (taxasPeriodo === "Mensal") {
+      taxasEst = totalDailyFeesAccumulated * 30;
+  } else { // Anual
+      taxasEst = totalDailyFeesAccumulated * 365;
+  }
+  // ---------------- Fim do Cálculo Refatorado ------------------
+
   const taxasEstFormatted = taxasEst.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' });
 
   // Função utilitária para trocar US$ por $
