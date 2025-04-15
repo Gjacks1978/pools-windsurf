@@ -16,8 +16,8 @@ function formatAgo(dateIso: string) {
 }
 
 function calcPNL(p: Position) {
-  // PNL = Liq. Atual + Coletado - Investido
-  return (p.current + p.collected - p.invested).toFixed(2);
+  // PNL = Liq. Atual + Coletado + Não Coletado - Investido
+  return (p.current + p.collected + p.uncollected - p.invested).toFixed(2);
 }
 
 function calcAPR(p: Position) {
@@ -50,17 +50,17 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-[#a1a1aa]">
           <thead>
-            <tr className="border-b border-[#232328]">
-              <th className="py-3 px-2 font-semibold text-left text-base">Pool</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Investido</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Liq. Atual</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Não Coletado</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Coletado</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">PNL</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">APR (D/M/A)</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Range</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Criado</th>
-              <th className="py-3 px-2 font-semibold text-left text-base">Ações</th>
+            <tr className="border-b border-[#232328] text-center">
+              <th className="py-3 px-2 font-semibold text-center text-base">Pool</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Investido</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Liq. Atual</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Não Coletado</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Coletado</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">PNL</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">APR (D/M/A)</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Range</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Criado</th>
+              <th className="py-3 px-2 font-semibold text-center text-base">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -72,17 +72,17 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
               </tr>
             ) : (
               positions.map((p, idx) => (
-                <tr key={idx} className="border-b border-[#232328]">
-                  <td className="py-2 px-2">
+                <tr key={idx} className="border-b border-[#232328] text-center">
+                  <td className="py-2 px-2 text-center">
                     <div className="font-semibold text-white">{p.pool}</div>
                     <div className="text-[10px] text-[#a1a1aa]">{p.network} • {p.dex}</div>
                   </td>
-                  <td className="py-2 px-2">${p.invested.toFixed(2)}</td>
-                  <td className="py-2 px-2">${p.current.toFixed(2)}</td>
-                  <td className="py-2 px-2">${p.uncollected.toFixed(2)}</td>
-                  <td className="py-2 px-2">${p.collected.toFixed(2)}</td>
-                  <td className="py-2 px-2">${calcPNL(p)}</td>
-                  <td className="py-2 px-2 whitespace-nowrap">
+                  <td className="py-2 px-2 text-center">${p.invested.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center">${p.current.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center">${p.uncollected.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center">${p.collected.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center">${calcPNL(p)}</td>
+                  <td className="py-2 px-2 text-center whitespace-nowrap">
   {(() => {
     const apr = calcAPR(p);
     return (
@@ -95,17 +95,17 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
   })()}
 </td>
 
-                  <td className="py-2 px-2">
+                  <td className="py-2 px-2 text-center">
                     {p.rangeMin} - {p.rangeMax}
                     {p.entryPrice !== undefined && p.entryPrice !== 0 && (
                       <div className="text-[10px] text-[#a1a1aa]">Entrada: ${p.entryPrice}</div>
                     )}
                   </td>
-                  <td className="py-2 px-2">
+                  <td className="py-2 px-2 text-center">
                     <div>{new Date(p.created).toLocaleString()}</div>
                     <div className="text-[10px] text-[#a1a1aa]">{formatAgo(p.created)}</div>
                   </td>
-                  <td className="py-2 px-2 flex gap-2">
+                  <td className="py-2 px-2 flex gap-2 justify-center items-center">
                     {!closed && (
                       <>
                         <button title="Editar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onEdit && onEdit(idx)}>

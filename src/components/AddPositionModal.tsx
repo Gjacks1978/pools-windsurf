@@ -89,7 +89,15 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onAdd(form);
+    // Garante que 'created' está em formato ISO
+    let createdISO = form.created;
+    if (form.created && !form.created.includes('T')) {
+      // Caso venha só a data (yyyy-MM-dd ou yyyy-MM-dd HH:mm), converte para ISO
+      createdISO = new Date(form.created).toISOString();
+    }
+    const positionToAdd = { ...form, created: createdISO };
+    console.log('[DEBUG] Salvando posição:', positionToAdd);
+    onAdd(positionToAdd);
     setForm({
       pool: "",
       invested: 0,

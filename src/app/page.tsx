@@ -54,16 +54,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
-      <div className="w-full max-w-7xl">
-        <DashboardCards />
+      <div className="w-full max-w-7xl mb-4">
+        <div className="font-bold text-white text-3xl md:text-4xl mb-4">Dashboard de Pools de Liquidez</div>
+        <DashboardCards positions={positions} />
       </div>
-      <section className="w-full max-w-7xl mt-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="font-bold text-white text-3xl md:text-4xl mb-4">Dashboard de Pools de Liquidez</div>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 rounded bg-[#232328] text-sm text-[#a1a1aa] border border-[#232328]">Ocultar</button>
-            <button className="px-3 py-1 rounded bg-white text-sm text-black font-semibold" onClick={() => setModalOpen(true)}>+ Adicionar Posição</button>
-          </div>
+      <div className="w-full max-w-7xl mt-8">
+        <div className="flex items-center justify-end mb-2">
+          <button className="px-3 py-1 rounded bg-white text-sm text-black font-semibold" onClick={() => setModalOpen(true)}>+ Adicionar Posição</button>
         </div>
         <div className="flex gap-2 mb-4">
           <button onClick={() => setTab('open')} className={`px-4 py-1 rounded ${tab==='open' ? 'bg-[#232328] text-white' : 'bg-transparent text-[#a1a1aa]'} text-sm font-semibold`}>Posições abertas ({positions.length})</button>
@@ -77,13 +74,13 @@ export default function Home() {
             setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
           }} />
         )}
-        <AddPositionModal
-          open={modalOpen}
-          onClose={() => { setModalOpen(false); setEditingIdx(null); setEditInitial(null); }}
-          onAdd={handleAddPosition}
-          initialData={editInitial}
-        />
-      </section>
+      </div>
+      <AddPositionModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingIdx(null); setEditInitial(null); }}
+        onAdd={handleAddPosition}
+        initialData={editInitial}
+      />
       <div className="w-full max-w-7xl">
         <TrackByAddress />
       </div>
