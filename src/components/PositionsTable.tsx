@@ -21,13 +21,16 @@ function calcPNL(p: Position) {
 }
 
 function calcAPR(p: Position) {
-  // APR anualizado simplificado: (PNL / Investido) * (365 / dias) * 100
+  // APR diário, mensal e anual (juros simples)
   const invested = p.invested;
-  if (!invested || invested === 0) return "-";
+  if (!invested || invested === 0) return { daily: '-', monthly: '-', annual: '-' };
   const pnl = p.current + p.collected - invested;
   const days = Math.max(1, (new Date().getTime() - new Date(p.created).getTime()) / (1000 * 60 * 60 * 24));
-  const apr = (pnl / invested) * (365 / days) * 100;
-  return apr.toFixed(2) + "%";
+  const dailyRate = (pnl / invested) / days;
+  const aprDaily = (dailyRate * 100).toFixed(2) + '%';
+  const aprMonthly = (dailyRate * 30 * 100).toFixed(2) + '%';
+  const aprAnnual = (dailyRate * 365 * 100).toFixed(2) + '%';
+  return { daily: aprDaily, monthly: aprMonthly, annual: aprAnnual };
 }
 
 type Props = {
@@ -37,30 +40,27 @@ type Props = {
   onDuplicate?: (idx: number) => void;
   onEdit?: (idx: number) => void;
   closed?: boolean;
+  onRestore?: (idx: number) => void;
 };
 
-export function PositionsTable({ positions, onRemove, onClosePosition, onDuplicate, onEdit, closed }: Props) {
+export function PositionsTable({ positions, onRemove, onClosePosition, onDuplicate, onEdit, closed, onRestore }: Props) {
   return (
     <div className="bg-[#18181b] rounded-xl p-6 w-full mt-4">
-      <div className="flex gap-2 mb-4">
-        <button className="px-4 py-1 rounded bg-[#232328] text-white text-xs font-semibold">Posições abertas ({positions.length})</button>
-        <button className="px-4 py-1 rounded bg-transparent text-[#a1a1aa] text-xs font-semibold">Posições fechadas (0)</button>
-      </div>
+
       <div className="overflow-x-auto">
-        <table className="min-w-full text-xs text-[#a1a1aa]">
+        <table className="min-w-full text-sm text-[#a1a1aa]">
           <thead>
             <tr className="border-b border-[#232328]">
-              <th className="py-2 px-2 font-semibold text-left">Pool</th>
-              <th className="py-2 px-2 font-semibold text-left">Investido</th>
-              <th className="py-2 px-2 font-semibold text-left">Liq. Atual</th>
-              <th className="py-2 px-2 font-semibold text-left">Não Coletado</th>
-              <th className="py-2 px-2 font-semibold text-left">Coletado</th>
-              <th className="py-2 px-2 font-semibold text-left">PNL</th>
-              <th className="py-2 px-2 font-semibold text-left">APR (D/M/A)</th>
-
-              <th className="py-2 px-2 font-semibold text-left">Range</th>
-              <th className="py-2 px-2 font-semibold text-left">Criado</th>
-              <th className="py-2 px-2 font-semibold text-left">Ações</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Pool</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Investido</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Liq. Atual</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Não Coletado</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Coletado</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">PNL</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">APR (D/M/A)</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Range</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Criado</th>
+              <th className="py-3 px-2 font-semibold text-left text-base">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +82,18 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                   <td className="py-2 px-2">${p.uncollected.toFixed(2)}</td>
                   <td className="py-2 px-2">${p.collected.toFixed(2)}</td>
                   <td className="py-2 px-2">${calcPNL(p)}</td>
-                  <td className="py-2 px-2">{calcAPR(p)}</td>
+                  <td className="py-2 px-2 whitespace-nowrap">
+  {(() => {
+    const apr = calcAPR(p);
+    return (
+      <div className="flex flex-col text-xs">
+        <span><b>D:</b> {apr.daily}</span>
+        <span><b>M:</b> {apr.monthly}</span>
+        <span><b>A:</b> {apr.annual}</span>
+      </div>
+    );
+  })()}
+</td>
 
                   <td className="py-2 px-2">
                     {p.rangeMin} - {p.rangeMax}
@@ -98,18 +109,25 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     {!closed && (
                       <>
                         <button title="Editar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onEdit && onEdit(idx)}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-blue-400"><path d="M15.586 2.586a2 2 0 0 1 2.828 2.828l-10 10A2 2 0 0 1 6 16H4a1 1 0 0 1-1-1v-2a2 2 0 0 1 .586-1.414l10-10z" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-300"><path d="M15.586 2.586a2 2 0 0 1 2.828 2.828l-10 10A2 2 0 0 1 6 16H4a1 1 0 0 1-1-1v-2a2 2 0 0 1 .586-1.414l10-10z" /></svg>
                         </button>
                         <button title="Duplicar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onDuplicate && onDuplicate(idx)}>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-yellow-400"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5v-2.25A2.25 2.25 0 0 1 9.75 3h7.5A2.25 2.25 0 0 1 19.5 5.25v7.5a2.25 2.25 0 0 1-2.25 2.25H15M3 9.75A2.25 2.25 0 0 1 5.25 7.5h7.5A2.25 2.25 0 0 1 15 9.75v7.5A2.25 2.25 0 0 1 12.75 19.5h-7.5A2.25 2.25 0 0 1 3 17.25v-7.5z" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5v-2.25A2.25 2.25 0 0 1 9.75 3h7.5A2.25 2.25 0 0 1 19.5 5.25v7.5a2.25 2.25 0 0 1-2.25 2.25H15M3 9.75A2.25 2.25 0 0 1 5.25 7.5h7.5A2.25 2.25 0 0 1 15 9.75v7.5A2.25 2.25 0 0 1 12.75 19.5h-7.5A2.25 2.25 0 0 1 3 17.25v-7.5z" /></svg>
                         </button>
                         <button title="Fechar posição" onClick={() => onClosePosition && onClosePosition(idx)} className="p-1 hover:bg-[#232328] rounded">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-green-400"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v1.5M3 7.5h18M3 7.5v10.125A2.625 2.625 0 0 0 5.625 20.25h12.75A2.625 2.625 0 0 0 21 17.625V7.5M9.75 10.5h4.5" />
+                          </svg>
                         </button>
                       </>
                     )}
+                    {closed && typeof onRestore === 'function' && (
+                      <button title="Restaurar" onClick={() => onRestore(idx)} className="p-1 hover:bg-[#232328] rounded">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10v6a2 2 0 0 0 2 2h6m-8-8 8-8m0 0v6a2 2 0 0 0 2 2h6m-8-8 8 8" /></svg>
+                      </button>
+                    )}
                     <button title="Excluir" onClick={() => onRemove(idx)} className="p-1 hover:bg-[#232328] rounded">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-red-400"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </td>
                 </tr>
