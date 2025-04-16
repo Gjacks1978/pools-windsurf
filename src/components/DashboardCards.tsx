@@ -73,13 +73,22 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$');
   };
   const cards = [
-    { label: "Valor Total", value: formatUSD(valorTotal), desc: "Valor atual de liquidez em todas as pools" },
-    { label: "Total Investido", value: formatUSD(totalInvestido), desc: "Investimento inicial em todas as pools" },
-    { label: "Taxas Totais", value: formatUSD(ganhosTotais), desc: "Taxas combinadas de todas as pools" },
-    { label: "P&L Total", value: formatUSD(pnlTotal), desc: "Lucro/perda combinado de todas as pools" },
+    { label: "Valor Total", value: valorTotal, desc: "Valor atual de liquidez em todas as pools", currency: true },
+    { label: "Total Investido", value: totalInvestido, desc: "Investimento inicial em todas as pools", currency: true },
+    { label: "Taxas Totais", value: ganhosTotais, desc: "Taxas combinadas de todas as pools", currency: true },
+    { label: "P&L Total", value: pnlTotal, desc: "Lucro/perda combinado de todas as pools", currency: true },
     { label: "Rendimento Est.", value: rendimentoMedio, desc: "Rendimento médio ponderado", select: true, selectOptions: RENDIMENTO_OPTIONS, selectValue: rendimentoPeriodo, setSelect: setRendimentoPeriodo, selectLabel: "Período do Rendimento:" },
-    { label: "Taxas Est.", value: taxasEstFormatted.replace('US$', '$'), desc: "Taxas estimadas ganhas", select: true, selectOptions: TAXAS_OPTIONS, selectValue: taxasPeriodo, setSelect: setTaxasPeriodo, selectLabel: "Período das Taxas:" },
+    { label: "Taxas Est.", value: taxasEst, desc: "Taxas estimadas ganhas", currency: true, select: true, selectOptions: TAXAS_OPTIONS, selectValue: taxasPeriodo, setSelect: setTaxasPeriodo, selectLabel: "Período das Taxas:" },
   ];
+
+  function renderCardValue(card: any) {
+    if (card.currency) {
+      // Valor monetário: separa símbolo e valor
+      const value = Number(card.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return <><span className="text-xs align-top mr-0.5 text-[#a1a1aa]">$</span><span>{value}</span></>;
+    }
+    return card.value;
+  }
 
   return (
     <div>
@@ -95,7 +104,7 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
             <span className="text-xs text-[#a1a1aa] font-medium">
               {card.label}
             </span>
-            <span className="text-3xl font-semibold text-white">{card.value}</span>
+            <span className="text-3xl font-semibold text-white">{renderCardValue(card)}</span>
             <span className="text-xs text-[#71717a] mb-2">{card.desc}</span>
             {card.select && (
               <div className="mt-auto w-full flex flex-col items-start">

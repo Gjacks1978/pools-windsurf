@@ -90,9 +90,9 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     <div className="font-semibold text-white">{p.pool}</div>
                     <div className="text-[10px] text-[#a1a1aa]">{p.network} • {p.dex}</div>
                   </td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.invested.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.current.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
+                  <td className="py-2 px-2 text-center text-base text-white font-normal">${p.invested.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-normal">${p.current.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
   {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
     <input
       type="number"
@@ -107,7 +107,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
     `$${p.uncollected.toFixed(2)}`
   )}
 </td>
-<td className="py-2 px-2 text-center text-base text-white font-semibold cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
+<td className="py-2 px-2 text-center text-base text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
   {editingCell && editingCell.row === idx && editingCell.field === 'collected' ? (
     <input
       type="number"
@@ -122,12 +122,12 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
     `$${p.collected.toFixed(2)}`
   )}
 </td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${calcPNL(p)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-normal">${calcPNL(p)}</td>
                   <td className="py-2 px-2 text-center whitespace-nowrap">
   {(() => {
     const apr = calcAPR(p);
     return (
-      <div className="flex flex-col text-xs text-base text-white font-semibold">
+      <div className="flex flex-col text-xs text-base text-white font-normal">
         <span><b>D:</b> {apr.daily}</span>
         <span><b>M:</b> {apr.monthly}</span>
         <span><b>A:</b> {apr.annual}</span>
