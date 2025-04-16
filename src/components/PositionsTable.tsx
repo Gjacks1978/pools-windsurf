@@ -101,19 +101,32 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                         <span>{p.rangeMin ?? '-'}</span>
                         <span>{p.rangeMax ?? '-'}</span>
                       </div>
-                      <div className="relative w-full h-3 flex items-center justify-center">
-                        {/* Barra horizontal */}
-                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#232328] rounded" />
-                        {/* Barrinha do entryPrice */}
-                        {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
-                          <div
-                            className="absolute top-0 bottom-0 w-1 bg-white rounded"
-                            style={{
-                              left: `calc(${((p.entryPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
-                            }}
-                          />
-                        )}
-                      </div>
+                      <div className="relative w-full h-3 flex items-center justify-center group cursor-pointer">
+  {/* Barra horizontal */}
+  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#232328] rounded" />
+  {/* Barrinha do entryPrice */}
+  {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
+    <div
+      className="absolute top-0 bottom-0 w-1 bg-white rounded"
+      style={{
+        left: `calc(${((p.entryPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
+      }}
+    />
+  )}
+  {/* Tooltip flutuante */}
+  {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && p.rangeMax > p.rangeMin && (
+    <div className="absolute z-10 left-1/2 -translate-x-1/2 bottom-6 hidden group-hover:flex flex-col items-center">
+      <div className="bg-[#2a003f] text-white rounded-lg shadow-lg px-4 py-2 text-xs whitespace-nowrap border border-[#4b206e]">
+        <div><b>Amplitude:</b> {(((p.rangeMax - p.rangeMin) / p.rangeMin) * 100).toFixed(2)}%</div>
+        <div><b>Mín:</b> {p.rangeMin}</div>
+        <div><b>Máx:</b> {p.rangeMax}</div>
+        {typeof p.entryPrice === 'number' && (
+          <div><b>Entrada:</b> {p.entryPrice}</div>
+        )}
+      </div>
+    </div>
+  )}
+</div>
                     </div>
                   </td>
                   <td className="py-2 px-2 text-center">
