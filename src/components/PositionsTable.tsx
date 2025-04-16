@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Position } from "./AddPositionModal";
 
 function formatAgo(dateIso: string) {
@@ -44,6 +44,19 @@ type Props = {
 };
 
 export function PositionsTable({ positions, onRemove, onClosePosition, onDuplicate, onEdit, closed, onRestore }: Props) {
+  // Estado para edição inline
+  const [editingCell, setEditingCell] = useState<{row: number, field: 'uncollected' | 'collected', value: number} | null>(null);
+
+  // Função para salvar edição inline
+  function handleInlineSave(idx: number, field: 'uncollected' | 'collected', value: number) {
+    if (isNaN(value)) return;
+    // Atualize diretamente o valor localmente (sem abrir modal)
+    if (positions[idx]) {
+      positions[idx][field] = value;
+    }
+    setEditingCell(null);
+  }
+
   return (
     <div className="bg-[#18181b] rounded-xl p-6 w-full mt-4">
 
@@ -79,8 +92,36 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                   </td>
                   <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.invested.toFixed(2)}</td>
                   <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.current.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.uncollected.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-white font-semibold">${p.collected.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-white font-semibold cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
+  {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
+    <input
+      type="number"
+      className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
+      value={editingCell.value}
+      autoFocus
+      onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
+      onBlur={() => handleInlineSave(idx, 'uncollected', editingCell.value)}
+      onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'uncollected', editingCell.value); }}
+    />
+  ) : (
+    `$${p.uncollected.toFixed(2)}`
+  )}
+</td>
+<td className="py-2 px-2 text-center text-base text-white font-semibold cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
+  {editingCell && editingCell.row === idx && editingCell.field === 'collected' ? (
+    <input
+      type="number"
+      className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
+      value={editingCell.value}
+      autoFocus
+      onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
+      onBlur={() => handleInlineSave(idx, 'collected', editingCell.value)}
+      onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'collected', editingCell.value); }}
+    />
+  ) : (
+    `$${p.collected.toFixed(2)}`
+  )}
+</td>
                   <td className="py-2 px-2 text-center text-base text-white font-semibold">${calcPNL(p)}</td>
                   <td className="py-2 px-2 text-center whitespace-nowrap">
   {(() => {
