@@ -1,6 +1,5 @@
 "use client";
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardCards } from "../components/DashboardCards";
 import { PositionsTable } from "../components/PositionsTable";
 import { TrackByAddress } from "../components/TrackByAddress";
@@ -9,6 +8,7 @@ import { AddPositionModal, Position } from "../components/AddPositionModal";
 export default function Home() {
   const [showSaved, setShowSaved] = useState(false);
   const [importError, setImportError] = useState<string|null>(null);
+  const [isClientLoaded, setIsClientLoaded] = useState(false);
 
   // Exporta dados como JSON
   function handleExport() {
@@ -47,20 +47,9 @@ export default function Home() {
     // Limpa input para permitir importar o mesmo arquivo novamente se necessário
     e.target.value = '';
   }
-  const [positions, setPositions] = useState<Position[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('positions');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-  const [closedPositions, setClosedPositions] = useState<Position[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('closedPositions');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [closedPositions, setClosedPositions] = useState<Position[]>([]);
+
   const [tab, setTab] = useState<'open'|'closed'>('open');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number|null>(null);
@@ -105,29 +94,55 @@ export default function Home() {
     setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  // Persistência LocalStorage
-  // Salva positions sempre que mudar
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    const savedPositions = localStorage.getItem('positions');
+    const savedClosedPositions = localStorage.getItem('closedPositions');
+    if (savedPositions) {
+      try {
+        setPositions(JSON.parse(savedPositions));
+      } catch (error) {
+        console.error("Failed to parse positions from localStorage", error);
+        // Optionally clear corrupted data
+        // localStorage.removeItem('positions');
+      }
+    }
+    if (savedClosedPositions) {
+       try {
+        setClosedPositions(JSON.parse(savedClosedPositions));
+      } catch (error) {
+        console.error("Failed to parse closedPositions from localStorage", error);
+        // Optionally clear corrupted data
+        // localStorage.removeItem('closedPositions');
+      }
+    }
+    setIsClientLoaded(true); // Mark client as loaded after attempting to load
+  }, []); // Run only once on mount
+
+  useEffect(() => {
+    if (isClientLoaded) { // Only save after initial client load is complete
       localStorage.setItem('positions', JSON.stringify(positions));
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 1200);
     }
-  }, [positions]);
-  // Salva closedPositions sempre que mudar
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+  }, [positions, isClientLoaded]); // Re-run if positions or isClientLoaded changes
+
+  useEffect(() => {
+    if (isClientLoaded) { // Only save after initial client load is complete
       localStorage.setItem('closedPositions', JSON.stringify(closedPositions));
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 1200);
     }
-  }, [closedPositions]);
+  }, [closedPositions, isClientLoaded]); // Re-run if closedPositions or isClientLoaded changes
 
   // Cálculos das pools fechadas
   const pnlTotalFechadas = closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
   let pnlBg = 'bg-[#18181b]';
   if (pnlTotalFechadas > 0) pnlBg = 'bg-[#071f14]';
   if (pnlTotalFechadas < 0) pnlBg = 'bg-[#1f0d07]';
+
+  if (!isClientLoaded) {
+    // Render a loading state or null during SSR/initial hydration
+    // You can replace null with a loading spinner component if desired
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
