@@ -122,7 +122,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
     `$${p.collected.toFixed(2)}`
   )}
 </td>
-                  <td className="py-2 px-2 text-center text-base text-white font-normal">${calcPNL(p)}</td>
+                  <td className={`py-2 px-2 text-center text-base font-normal ${Number(calcPNL(p)) >= 0 ? 'text-green-400' : 'text-red-400'}`}><span className="text-xs align-top mr-0.5 text-[#a1a1aa]">$</span><span>{calcPNL(p)}</span></td>
                   <td className="py-2 px-2 text-center whitespace-nowrap">
   {(() => {
     const apr = calcAPR(p);
@@ -144,7 +144,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       </div>
                       <div className="relative w-full h-3 flex items-center justify-center group cursor-pointer">
   {/* Barra horizontal */}
-  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#232328] rounded" />
+  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#4b206e] rounded" />
   {/* Barrinha do entryPrice */}
   {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
     <div
