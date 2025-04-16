@@ -96,10 +96,25 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
 </td>
 
                   <td className="py-2 px-2 text-center">
-                    {p.rangeMin} - {p.rangeMax}
-                    {p.entryPrice !== undefined && p.entryPrice !== 0 && (
-                      <div className="text-[10px] text-[#a1a1aa]">Entrada: ${p.entryPrice}</div>
-                    )}
+                    <div className="flex flex-col items-center w-full min-w-[120px]">
+                      <div className="flex w-full items-center justify-between text-xs text-[#a1a1aa] mb-1">
+                        <span>{p.rangeMin ?? '-'}</span>
+                        <span>{p.rangeMax ?? '-'}</span>
+                      </div>
+                      <div className="relative w-full h-3 flex items-center justify-center">
+                        {/* Barra horizontal */}
+                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#232328] rounded" />
+                        {/* Barrinha do entryPrice */}
+                        {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
+                          <div
+                            className="absolute top-0 bottom-0 w-1 bg-white rounded"
+                            style={{
+                              left: `calc(${((p.entryPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="py-2 px-2 text-center">
                     <div>{new Date(p.created).toLocaleString()}</div>
@@ -109,8 +124,11 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     {!closed && (
                       <>
                         <button title="Editar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onEdit && onEdit(idx)}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-300"><path d="M15.586 2.586a2 2 0 0 1 2.828 2.828l-10 10A2 2 0 0 1 6 16H4a1 1 0 0 1-1-1v-2a2 2 0 0 1 .586-1.414l10-10z" /></svg>
-                        </button>
+  {/* Heroicons Pencil Square outline */}
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182L7.5 19.212l-4.182.465a.75.75 0 0 1-.83-.829l.465-4.182L16.862 3.487zm0 0L19.5 6.125" />
+  </svg>
+</button>
                         <button title="Duplicar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onDuplicate && onDuplicate(idx)}>
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5v-2.25A2.25 2.25 0 0 1 9.75 3h7.5A2.25 2.25 0 0 1 19.5 5.25v7.5a2.25 2.25 0 0 1-2.25 2.25H15M3 9.75A2.25 2.25 0 0 1 5.25 7.5h7.5A2.25 2.25 0 0 1 15 9.75v7.5A2.25 2.25 0 0 1 12.75 19.5h-7.5A2.25 2.25 0 0 1 3 17.25v-7.5z" /></svg>
                         </button>
