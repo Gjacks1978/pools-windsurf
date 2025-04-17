@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { AuthChangeEvent, Session, User, AuthError } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session, User, Subscription } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -34,7 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
-      listener?.unsubscribe();
+      // Correct way to unsubscribe from the listener
+      listener?.subscription.unsubscribe();
     };
   }, []);
 

@@ -190,12 +190,24 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
           tabIndex={0}
           onClick={() => {
             const input = document.getElementById('created-input') as HTMLInputElement;
-            if (input) input.showPicker ? input.showPicker() : input.focus();
+            if (input) {
+              if (input.showPicker) {
+                input.showPicker();
+              } else {
+                input.focus();
+              }
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               const input = document.getElementById('created-input') as HTMLInputElement;
-              if (input) input.showPicker ? input.showPicker() : input.focus();
+              if (input) {
+                if (input.showPicker) {
+                  input.showPicker();
+                } else {
+                  input.focus();
+                }
+              }
             }
           }}
         >
