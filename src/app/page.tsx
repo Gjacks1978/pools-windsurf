@@ -44,7 +44,7 @@ export default function Home() {
         setPositions(data.positions);
         setClosedPositions(data.closedPositions);
         setImportError(null);
-      } catch (err: any) {
+      } catch {
         setImportError('Arquivo inválido ou corrompido');
       }
     };
@@ -105,8 +105,8 @@ export default function Home() {
     if (savedPositions) {
       try {
         setPositions(JSON.parse(savedPositions));
-      } catch (error) {
-        console.error("Failed to parse positions from localStorage", error);
+      } catch {
+        console.error("Failed to parse positions from localStorage");
         // Optionally clear corrupted data
         // localStorage.removeItem('positions');
       }
@@ -114,8 +114,8 @@ export default function Home() {
     if (savedClosedPositions) {
        try {
         setClosedPositions(JSON.parse(savedClosedPositions));
-      } catch (error) {
-        console.error("Failed to parse closedPositions from localStorage", error);
+      } catch {
+        console.error("Failed to parse closedPositions from localStorage");
         // Optionally clear corrupted data
         // localStorage.removeItem('closedPositions');
       }

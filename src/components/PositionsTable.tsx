@@ -93,48 +93,48 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                   <td className="py-2 px-2 text-center text-base text-white font-normal">${p.invested.toFixed(2)}</td>
                   <td className="py-2 px-2 text-center text-base text-white font-normal">${p.current.toFixed(2)}</td>
                   <td className="py-2 px-2 text-center text-base text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
-  {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
-    <input
-      type="number"
-      className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
-      value={editingCell.value}
-      autoFocus
-      onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
-      onBlur={() => handleInlineSave(idx, 'uncollected', editingCell.value)}
-      onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'uncollected', editingCell.value); }}
-    />
-  ) : (
-    `$${p.uncollected.toFixed(2)}`
-  )}
-</td>
-<td className="py-2 px-2 text-center text-base text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
-  {editingCell && editingCell.row === idx && editingCell.field === 'collected' ? (
-    <input
-      type="number"
-      className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
-      value={editingCell.value}
-      autoFocus
-      onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
-      onBlur={() => handleInlineSave(idx, 'collected', editingCell.value)}
-      onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'collected', editingCell.value); }}
-    />
-  ) : (
-    `$${p.collected.toFixed(2)}`
-  )}
-</td>
+                    {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
+                      <input
+                        type="number"
+                        className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
+                        value={editingCell.value}
+                        autoFocus
+                        onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
+                        onBlur={() => handleInlineSave(idx, 'uncollected', editingCell.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'uncollected', editingCell.value); }}
+                      />
+                    ) : (
+                      `$${p.uncollected.toFixed(2)}`
+                    )}
+                  </td>
+                  <td className="py-2 px-2 text-center text-base text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
+                    {editingCell && editingCell.row === idx && editingCell.field === 'collected' ? (
+                      <input
+                        type="number"
+                        className="bg-[#232328] text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-[#4b206e] focus:ring-2 focus:ring-[#4b206e]"
+                        value={editingCell.value}
+                        autoFocus
+                        onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
+                        onBlur={() => handleInlineSave(idx, 'collected', editingCell.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'collected', editingCell.value); }}
+                      />
+                    ) : (
+                      `$${p.collected.toFixed(2)}`
+                    )}
+                  </td>
                   <td className={`py-2 px-2 text-center text-base font-normal ${Number(calcPNL(p)) >= 0 ? 'text-green-400' : 'text-red-400'}`}><span className="text-xs align-top mr-0.5 text-[#a1a1aa]">$</span><span>{calcPNL(p)}</span></td>
                   <td className="py-2 px-2 text-center whitespace-nowrap">
-  {(() => {
-    const apr = calcAPR(p);
-    return (
-      <div className="flex flex-col text-xs text-base text-white font-normal">
-        <span><b>D:</b> {apr.daily}</span>
-        <span><b>M:</b> {apr.monthly}</span>
-        <span><b>A:</b> {apr.annual}</span>
-      </div>
-    );
-  })()}
-</td>
+                    {(() => {
+                      const apr = calcAPR(p);
+                      return (
+                        <div className="flex flex-col text-xs text-base text-white font-normal">
+                          <span><b>D:</b> {apr.daily}</span>
+                          <span><b>M:</b> {apr.monthly}</span>
+                          <span><b>A:</b> {apr.annual}</span>
+                        </div>
+                      );
+                    })()}
+                  </td>
 
                   <td className="py-2 px-2 text-center">
                     <div className="flex flex-col items-center w-full min-w-[120px]">
@@ -143,31 +143,31 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                         <span>{p.rangeMax ?? '-'}</span>
                       </div>
                       <div className="relative w-full h-3 flex items-center justify-center group cursor-pointer">
-  {/* Barra horizontal */}
-  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#4b206e] rounded" />
-  {/* Barrinha do entryPrice */}
-  {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
-    <div
-      className="absolute top-0 bottom-0 w-1 bg-white rounded"
-      style={{
-        left: `calc(${((p.entryPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
-      }}
-    />
-  )}
-  {/* Tooltip flutuante */}
-  {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && p.rangeMax > p.rangeMin && (
-    <div className="absolute z-10 left-1/2 -translate-x-1/2 bottom-6 hidden group-hover:flex flex-col items-center">
-      <div className="bg-[#2a003f] text-white rounded-lg shadow-lg px-4 py-2 text-xs whitespace-nowrap border border-[#4b206e]">
-        <div><b>Amplitude:</b> {(((p.rangeMax - p.rangeMin) / p.rangeMin) * 100).toFixed(2)}%</div>
-        <div><b>Mín:</b> {p.rangeMin}</div>
-        <div><b>Máx:</b> {p.rangeMax}</div>
-        {typeof p.entryPrice === 'number' && (
-          <div><b>Entrada:</b> {p.entryPrice}</div>
-        )}
-      </div>
-    </div>
-  )}
-</div>
+                        {/* Barra horizontal */}
+                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-[#4b206e] rounded" />
+                        {/* Barrinha do entryPrice */}
+                        {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.entryPrice === 'number' && p.rangeMax > p.rangeMin && p.entryPrice >= p.rangeMin && p.entryPrice <= p.rangeMax && (
+                          <div
+                            className="absolute top-0 bottom-0 w-1 bg-white rounded"
+                            style={{
+                              left: `calc(${((p.entryPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
+                            }}
+                          />
+                        )}
+                        {/* Tooltip flutuante */}
+                        {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && p.rangeMax > p.rangeMin && (
+                          <div className="absolute z-10 left-1/2 -translate-x-1/2 bottom-6 hidden group-hover:flex flex-col items-center">
+                            <div className="bg-[#2a003f] text-white rounded-lg shadow-lg px-4 py-2 text-xs whitespace-nowrap border border-[#4b206e]">
+                              <div><b>Amplitude:</b> {(((p.rangeMax - p.rangeMin) / p.rangeMin) * 100).toFixed(2)}%</div>
+                              <div><b>Mín:</b> {p.rangeMin}</div>
+                              <div><b>Máx:</b> {p.rangeMax}</div>
+                              {typeof p.entryPrice === 'number' && (
+                                <div><b>Entrada:</b> {p.entryPrice}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="py-2 px-2 text-center">
@@ -178,11 +178,11 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     {!closed && (
                       <>
                         <button title="Editar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onEdit && onEdit(idx)}>
-  {/* Heroicons Pencil Square outline */}
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182L7.5 19.212l-4.182.465a.75.75 0 0 1-.83-.829l.465-4.182L16.862 3.487zm0 0L19.5 6.125" />
-  </svg>
-</button>
+                          {/* Heroicons Pencil Square outline */}
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182L7.5 19.212l-4.182.465a.75.75 0 0 1-.83-.829l.465-4.182L16.862 3.487zm0 0L19.5 6.125" />
+                          </svg>
+                        </button>
                         <button title="Duplicar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onDuplicate && onDuplicate(idx)}>
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5v-2.25A2.25 2.25 0 0 1 9.75 3h7.5A2.25 2.25 0 0 1 19.5 5.25v7.5a2.25 2.25 0 0 1-2.25 2.25H15M3 9.75A2.25 2.25 0 0 1 5.25 7.5h7.5A2.25 2.25 0 0 1 15 9.75v7.5A2.25 2.25 0 0 1 12.75 19.5h-7.5A2.25 2.25 0 0 1 3 17.25v-7.5z" /></svg>
                         </button>

@@ -14,10 +14,10 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
   const [taxasPeriodo, setTaxasPeriodo] = useState("Anual");
 
   // Cálculos reais
-  const valorTotal = positions.reduce((acc, p) => acc + p.current, 0);
-  const totalInvestido = positions.reduce((acc, p) => acc + p.invested, 0);
-  const ganhosTotais = positions.reduce((acc, p) => acc + p.collected + p.uncollected, 0);
-  const pnlTotal = positions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
+  const valorTotal = positions.reduce((acc: number, p) => acc + p.current, 0);
+  const totalInvestido = positions.reduce((acc: number, p) => acc + p.invested, 0);
+  const ganhosTotais = positions.reduce((acc: number, p) => acc + p.collected + p.uncollected, 0);
+  const pnlTotal = positions.reduce((acc: number, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
 
   // --- Cálculo Refatorado para Rendimento Est. e Taxas Est. ---
 
@@ -66,12 +66,6 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
   }
   // ---------------- Fim do Cálculo Refatorado ------------------
 
-  const taxasEstFormatted = taxasEst.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' });
-
-  // Função utilitária para trocar US$ por $
-  const formatUSD = (v: number) => {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$');
-  };
   const cards = [
     { label: "Valor Total", value: valorTotal, desc: "Valor atual de liquidez em todas as pools", currency: true },
     { label: "Total Investido", value: totalInvestido, desc: "Investimento inicial em todas as pools", currency: true },

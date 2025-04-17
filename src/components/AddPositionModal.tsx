@@ -87,7 +87,6 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
       ...prev,
       dex: DEXES_BY_NETWORK[form.network][0],
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.network]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -107,7 +106,6 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
       createdISO = new Date(form.created).toISOString();
     }
     const positionToAdd = { ...form, created: createdISO };
-    console.log('[DEBUG] Salvando posição:', positionToAdd);
     onAdd(positionToAdd);
     setForm({
       pool: "",
@@ -190,11 +188,11 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
         <div
           className="relative w-full cursor-pointer group"
           tabIndex={0}
-          onClick={e => {
+          onClick={() => {
             const input = document.getElementById('created-input') as HTMLInputElement;
             if (input) input.showPicker ? input.showPicker() : input.focus();
           }}
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               const input = document.getElementById('created-input') as HTMLInputElement;
               if (input) input.showPicker ? input.showPicker() : input.focus();
@@ -225,4 +223,3 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
     </div>
   );
 }
-
