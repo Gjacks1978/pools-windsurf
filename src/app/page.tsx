@@ -4,8 +4,13 @@ import { DashboardCards } from "../components/DashboardCards";
 import { PositionsTable } from "../components/PositionsTable";
 import { TrackByAddress } from "../components/TrackByAddress";
 import { AddPositionModal, Position } from "../components/AddPositionModal";
+import { useAuth } from "../contexts/AuthContext";
+import AuthForm from "../components/AuthForm";
+import LogoutButton from "../components/LogoutButton";
 
 export default function Home() {
+  const { user, loading } = useAuth();
+
   const [showSaved, setShowSaved] = useState(false);
   const [importError, setImportError] = useState<string|null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -144,6 +149,24 @@ export default function Home() {
     return null;
   }
 
+  // Authentication Check
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex justify-center items-center text-white">
+        Carregando...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex justify-center items-center">
+        <AuthForm />
+      </div>
+    );
+  }
+
+  // Render dashboard only if user is logged in
   return (
     <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
       {/* Aviso de dados salvos */}
@@ -167,7 +190,11 @@ export default function Home() {
         </label>
       </div>
       <div className="w-full max-w-7xl mb-4">
-        <div className="font-bold text-white text-3xl md:text-4xl mb-4">Dashboard de Pools de Liquidez</div>
+        {/* Title and Logout Button */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="font-bold text-white text-3xl md:text-4xl">Dashboard de Pools de Liquidez</div>
+          <LogoutButton />
+        </div>
         <DashboardCards positions={positions} />
       </div>
       <div className="w-full max-w-7xl mt-8">
