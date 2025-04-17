@@ -1,6 +1,25 @@
-# Changelog
+git log --onelinegit log --oneline# Changelog
 
 Todas as alterações relevantes do projeto serão registradas aqui para facilitar o acompanhamento do desenvolvimento.
+
+## [Unreleased] - 2025-04-16
+
+### Added
+- Implementação da autenticação de usuários usando Supabase:
+    - Adição do pacote `@supabase/supabase-js`.
+    - Criação do `AuthContext` (`src/contexts/AuthContext.tsx`) para gerenciar estado de autenticação.
+    - Criação do `AuthForm` (`src/components/AuthForm.tsx`) para login/cadastro.
+    - Criação do `LogoutButton` (`src/components/LogoutButton.tsx`).
+    - Integração do `AuthProvider` no layout raiz (`src/app/layout.tsx`).
+    - Condicionamento da renderização da página principal (`src/app/page.tsx`) com base no estado de autenticação.
+    - Criação do arquivo de configuração do cliente Supabase (`src/lib/supabaseClient.ts`).
+    - Adição do componente de erro padrão `src/app/error.tsx` para o App Router.
+
+### Fixed
+- Correção de problemas de build e dependências relacionados ao `pnpm` e Next.js:
+    - Resolvido erro "Module not found" para `@supabase/supabase-js`.
+    - Corrigido erro de componente cliente adicionando `"use client"` ao `AuthContext`.
+    - Resolvidos problemas de carregamento de chunks e arquivos estáticos (erros 404) limpando cache e garantindo a correta instalação das dependências com `pnpm`.
 
 ## [2025-04-16]
 ### Melhorias Visuais e Funcionais
@@ -33,6 +52,7 @@ Todas as alterações relevantes do projeto serão registradas aqui para facilit
 - Centralização do conteúdo dos cards pelo topo.
 - Botão "+ Adicionar Posição" alinhado à direita, botão "Ocultar" removido.
 - Centralização dos botões de ação da tabela de posições.
+
 ## [2025-04-16]
 ### Melhorias
 - Refino do dashboard de pools de liquidez com foco em métricas financeiras, usabilidade, clareza visual e responsividade.
@@ -54,4 +74,3 @@ Todas as alterações relevantes do projeto serão registradas aqui para facilit
 - Cards exclusivos para "Posições fechadas" exibindo ganhos totais, P&L total e APR anual médio ponderado.
 - Barra visual para amplitude de range e preço de entrada na tabela de posições.
 - Modal para adição/edição de posições e função de duplicar posição.
-
