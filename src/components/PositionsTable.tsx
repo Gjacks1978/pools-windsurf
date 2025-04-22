@@ -88,9 +88,13 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                 <tr key={idx} className="border-b border-[#232328] text-center">
                   <td className="py-2 px-2 text-center">
                     <div className="font-semibold text-white">{p.pool}</div>
-                    <div className="text-[10px] text-[#a1a1aa]">
-                      {p.network} • {p.dex}
-                      {p.isSimulated && <span className="ml-1 text-amber-400">(Simulado)</span>}
+                    <div className="flex items-center">
+                      {p.isSimulated && (
+                        <span className="mr-1 text-amber-400 text-xs font-bold">[SIMULADO]</span>
+                      )}
+                      <div className="text-[10px] text-[#a1a1aa]">
+                        {p.network} • {p.dex}
+                      </div>
                     </div>
                   </td>
                   <td className="py-2 px-2 text-center text-base text-white font-normal">${p.invested.toFixed(2)}</td>

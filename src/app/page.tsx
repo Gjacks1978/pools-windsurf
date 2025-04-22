@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { DashboardCards } from "../components/DashboardCards";
 import { PositionsTable } from "../components/PositionsTable";
-import { TrackByAddress } from "../components/TrackByAddress";
 import { AddPositionModal, Position } from "../components/AddPositionModal";
 import { useAuth } from "../contexts/AuthContext";
 import AuthForm from "../components/AuthForm";
@@ -54,7 +53,6 @@ export default function Home() {
   }
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
-  const [trackedPositions, setTrackedPositions] = useState<Position[]>([]);
 
   const [tab, setTab] = useState<'open'|'closed'>('open');
   const [modalOpen, setModalOpen] = useState(false);
@@ -196,7 +194,7 @@ export default function Home() {
           <div className="font-bold text-white text-3xl md:text-4xl">Dashboard de Pools de Liquidez</div>
           <LogoutButton />
         </div>
-        <DashboardCards positions={[...positions, ...trackedPositions]} />
+        <DashboardCards positions={positions} />
       </div>
       <div className="w-full max-w-7xl mt-8">
         <div className="flex items-center justify-end mb-2">
@@ -261,19 +259,6 @@ export default function Home() {
               onEdit={handleEdit} 
               closed={false} 
             />
-            {trackedPositions.length > 0 && (
-              <div className="mt-8 mb-4">
-                <div className="text-white font-semibold text-lg">Posições Rastreadas ({trackedPositions.length})</div>
-                <div className="text-xs text-[#a1a1aa] mb-4">
-                  Posições de liquidez rastreadas automaticamente dos endereços adicionados.
-                </div>
-                <PositionsTable 
-                  positions={trackedPositions} 
-                  onRemove={() => {}} 
-                  closed={false} 
-                />
-              </div>
-            )}
           </>
         ) : (
           <PositionsTable 
@@ -293,9 +278,7 @@ export default function Home() {
         onAdd={handleAddPosition}
         initialData={editInitial}
       />
-      <div className="w-full max-w-7xl">
-        <TrackByAddress onPositionsFound={setTrackedPositions} />
-      </div>
+
     </div>
   );
 }

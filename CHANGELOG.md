@@ -4,14 +4,10 @@ Todas as alterações relevantes do projeto serão registradas aqui para facilit
 
 ## [Unreleased] - 2025-04-22
 
+### Removed
+- Removida a funcionalidade de rastreamento de carteiras por endereço devido a limitações técnicas e foco no gerenciamento manual.
+
 ### Added
-- Implementação da funcionalidade de rastreamento de carteiras por endereço:
-    - Criação do componente `TrackByAddress.tsx` para adicionar e gerenciar endereços.
-    - Integração com API para buscar dados de pools de liquidez da Uniswap (Ethereum).
-    - Exibição de dados reais de pools com as mesmas informações das listas manuais.
-    - Adição de indicador visual (barra verde) para mostrar o valor atual do ativo no range.
-    - Tratamento de erros ao rastrear endereços inválidos ou sem dados.
-    - Integração dos resultados totais aos cards superiores do dashboard.
 
 - Implementação da autenticação de usuários usando Supabase:
     - Adição do pacote `@supabase/supabase-js`.
@@ -24,6 +20,7 @@ Todas as alterações relevantes do projeto serão registradas aqui para facilit
     - Adição do componente de erro padrão `src/app/error.tsx` para o App Router.
 
 ### Fixed
+- Resolvido problema de conexão com a blockchain Ethereum através da implementação de API serverless.
 - Correção de problemas de build e dependências relacionados ao `pnpm` e Next.js:
     - Resolvido erro "Module not found" para `@supabase/supabase-js`.
     - Corrigido erro de componente cliente adicionando `"use client"` ao `AuthContext`.
