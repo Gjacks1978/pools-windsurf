@@ -1,10 +1,18 @@
-git log --onelinegit log --oneline# Changelog
+# Changelog
 
 Todas as alterações relevantes do projeto serão registradas aqui para facilitar o acompanhamento do desenvolvimento.
 
-## [Unreleased] - 2025-04-16
+## [Unreleased] - 2025-04-22
 
 ### Added
+- Implementação da funcionalidade de rastreamento de carteiras por endereço:
+    - Criação do componente `TrackByAddress.tsx` para adicionar e gerenciar endereços.
+    - Integração com API para buscar dados de pools de liquidez da Uniswap (Ethereum).
+    - Exibição de dados reais de pools com as mesmas informações das listas manuais.
+    - Adição de indicador visual (barra verde) para mostrar o valor atual do ativo no range.
+    - Tratamento de erros ao rastrear endereços inválidos ou sem dados.
+    - Integração dos resultados totais aos cards superiores do dashboard.
+
 - Implementação da autenticação de usuários usando Supabase:
     - Adição do pacote `@supabase/supabase-js`.
     - Criação do `AuthContext` (`src/contexts/AuthContext.tsx`) para gerenciar estado de autenticação.

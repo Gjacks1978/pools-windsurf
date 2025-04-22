@@ -88,7 +88,10 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                 <tr key={idx} className="border-b border-[#232328] text-center">
                   <td className="py-2 px-2 text-center">
                     <div className="font-semibold text-white">{p.pool}</div>
-                    <div className="text-[10px] text-[#a1a1aa]">{p.network} • {p.dex}</div>
+                    <div className="text-[10px] text-[#a1a1aa]">
+                      {p.network} • {p.dex}
+                      {p.isSimulated && <span className="ml-1 text-amber-400">(Simulado)</span>}
+                    </div>
                   </td>
                   <td className="py-2 px-2 text-center text-base text-white font-normal">${p.invested.toFixed(2)}</td>
                   <td className="py-2 px-2 text-center text-base text-white font-normal">${p.current.toFixed(2)}</td>
@@ -154,6 +157,15 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                             }}
                           />
                         )}
+                        {/* Barrinha do preço atual (para posições rastreadas) */}
+                        {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && typeof p.currentPrice === 'number' && p.rangeMax > p.rangeMin && p.currentPrice >= p.rangeMin && p.currentPrice <= p.rangeMax && ('isTracked' in p) && (
+                          <div
+                            className="absolute top-0 bottom-0 w-1 bg-green-400 rounded"
+                            style={{
+                              left: `calc(${((p.currentPrice - p.rangeMin) / (p.rangeMax - p.rangeMin)) * 100}% - 2px)`
+                            }}
+                          />
+                        )}
                         {/* Tooltip flutuante */}
                         {typeof p.rangeMin === 'number' && typeof p.rangeMax === 'number' && p.rangeMax > p.rangeMin && (
                           <div className="absolute z-10 left-1/2 -translate-x-1/2 bottom-6 hidden group-hover:flex flex-col items-center">
@@ -163,6 +175,9 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                               <div><b>Máx:</b> {p.rangeMax}</div>
                               {typeof p.entryPrice === 'number' && (
                                 <div><b>Entrada:</b> {p.entryPrice}</div>
+                              )}
+                              {typeof p.currentPrice === 'number' && ('isTracked' in p) && (
+                                <div><b>Atual:</b> <span className="text-green-400">{p.currentPrice}</span></div>
                               )}
                             </div>
                           </div>
@@ -175,7 +190,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     <div className="text-[10px] text-[#a1a1aa]">{formatAgo(p.created)}</div>
                   </td>
                   <td className="py-2 px-2 flex gap-2 justify-center items-center">
-                    {!closed && (
+                    {!closed && !('isTracked' in p) && (
                       <>
                         <button title="Editar" className="p-1 hover:bg-[#232328] rounded" onClick={() => onEdit && onEdit(idx)}>
                           {/* Heroicons Pencil Square outline */}
@@ -192,6 +207,12 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                           </svg>
                         </button>
                       </>
+                    )}
+                    {!closed && ('isTracked' in p) && (
+                      <div className="text-xs text-[#a1a1aa] italic">
+                        Rastreado
+                        {p.isSimulated && <span className="ml-1 text-amber-400">(Dados simulados)</span>}
+                      </div>
                     )}
                     {closed && typeof onRestore === 'function' && (
                       <button title="Restaurar" onClick={() => onRestore(idx)} className="p-1 hover:bg-[#232328] rounded">

@@ -14,6 +14,11 @@ export type Position = {
   dex: string;
   created: string; // ISO string
   observacoes?: string;
+  
+  // Propriedades para posições rastreadas
+  isTracked?: boolean;
+  currentPrice?: number; // Preço atual para exibir na barra de range
+  isSimulated?: boolean; // Indica se os dados são simulados
 };
 
 const NETWORKS = ["Ethereum", "Arbitrum", "Polygon", "BSC", "Optimism", "Base", "Sui", "Solana"];
