@@ -31,7 +31,22 @@ export async function getPositions() {
     if (!data) return [];
 
     // Converte o formato do banco para o formato da aplicação
-    return data.map((item: any) => ({
+    return data.map((item: {
+      pool: string;
+      invested: number;
+      current: number;
+      uncollected: number;
+      collected: number;
+      range_min: number;
+      range_max: number;
+      entry_price: number;
+      current_price: number;
+      network: string;
+      dex: string;
+      created: string;
+      observacoes?: string;
+      is_closed: boolean;
+    }) => ({
       pool: item.pool,
       invested: item.invested,
       current: item.current,
@@ -80,7 +95,22 @@ export async function getClosedPositions() {
     if (!data) return [];
 
     // Converte o formato do banco para o formato da aplicação
-    return data.map((item: any) => ({
+    return data.map((item: {
+      pool: string;
+      invested: number;
+      current: number;
+      uncollected: number;
+      collected: number;
+      range_min: number;
+      range_max: number;
+      entry_price: number;
+      current_price: number;
+      network: string;
+      dex: string;
+      created: string;
+      observacoes?: string;
+      is_closed: boolean;
+    }) => ({
       pool: item.pool,
       invested: item.invested,
       current: item.current,
@@ -271,7 +301,32 @@ export async function restorePosition(created: string) {
 /**
  * Importa posições de backup (apaga todas e reimporta)
  */
-export async function importPositions(positions: Position[], closedPositions: Position[]) {
+/**
+ * Converte uma posição do formato da aplicação para o formato do banco
+ */
+function convertToDbFormat(position: Position, isClosed: boolean) {
+  return {
+    pool: position.pool,
+    invested: position.invested,
+    current: position.current,
+    uncollected: position.uncollected,
+    collected: position.collected,
+    range_min: position.rangeMin,
+    range_max: position.rangeMax,
+    entry_price: position.entryPrice,
+    current_price: position.currentPrice,
+    network: position.network,
+    dex: position.dex,
+    created: position.created,
+    observacoes: position.observacoes,
+    is_closed: isClosed
+  };
+}
+
+/**
+ * Deleta todas as posições do usuário
+ */
+async function deleteAllPositions() {
   // Se o Supabase não estiver configurado, falha silenciosamente
   if (!isSupabaseConfigured()) {
     console.error('Supabase não configurado. Configure as variáveis de ambiente NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.');
@@ -279,51 +334,35 @@ export async function importPositions(positions: Position[], closedPositions: Po
   }
   
   try {
-    // Inicia uma transação para garantir atomicidade
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from('positions')
       .delete()
-      .neq('id', 0); // Delete all
+      .neq('id', 0); // Deleta todas
     
-    if (deleteError) {
-      console.error('Erro ao limpar posições existentes:', deleteError);
+    if (error) {
+      console.error('Erro ao limpar posições existentes:', error);
       return false;
     }
     
-    // Prepara dados para inserção
+    return true;
+  } catch (e) {
+    console.error('Erro ao limpar posições existentes:', e);
+    return false;
+  }
+}
+
+/**
+ * Importa posições de backup (apaga todas e reimporta)
+ */
+export const importPositions = async (positions: Position[], closedPositions: Position[]) => {
+  try {
+    // Primeiro deletamos todas as posições existentes para o usuário
+    await deleteAllPositions();
+    
+    // Convertemos todos para o formato do banco e inserimos
     const allPositions = [
-      ...positions.map(p => ({
-        pool: p.pool,
-        invested: p.invested,
-        current: p.current,
-        uncollected: p.uncollected,
-        collected: p.collected,
-        range_min: p.rangeMin,
-        range_max: p.rangeMax,
-        entry_price: p.entryPrice,
-        current_price: p.currentPrice,
-        network: p.network,
-        dex: p.dex,
-        created: p.created,
-        observacoes: p.observacoes,
-        is_closed: false
-      })),
-      ...closedPositions.map(p => ({
-        pool: p.pool,
-        invested: p.invested,
-        current: p.current,
-        uncollected: p.uncollected,
-        collected: p.collected,
-        range_min: p.rangeMin,
-        range_max: p.rangeMax,
-        entry_price: p.entryPrice,
-        current_price: p.currentPrice,
-        network: p.network,
-        dex: p.dex,
-        created: p.created,
-        observacoes: p.observacoes,
-        is_closed: true
-      }))
+      ...positions.map((p) => convertToDbFormat(p, false)),
+      ...closedPositions.map((p) => convertToDbFormat(p, true))
     ];
     
     if (allPositions.length > 0) {
@@ -338,8 +377,9 @@ export async function importPositions(positions: Position[], closedPositions: Po
     }
     
     return true;
-  } catch (e) {
-    console.error('Erro ao importar posições:', e);
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : 'Erro desconhecido';
+    console.error('Erro ao importar posições:', errorMessage);
     return false;
   }
-}
+};

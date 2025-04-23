@@ -30,7 +30,7 @@ const DEXES_BY_NETWORK: Record<string, string[]> = {
   Optimism: ["Uniswap", "Velodrome", "Beethoven X"],
   Base: ["Aerodrome", "Uniswap", "Sushi"],
   Sui: ["Cetus", "Aftermath", "Turbos"],
-  Solana: ["Orca", "Raydium", "Lifinity", "Jupiter"],
+  Solana: ["Orca", "Raydium", "Lifinity", "Jupiter", "Meteora"],
 };
 
 export function AddPositionModal({ open, onClose, onAdd, initialData }: {

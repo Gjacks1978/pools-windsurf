@@ -2,7 +2,27 @@
 
 Todas as alterações relevantes do projeto serão registradas aqui para facilitar o acompanhamento do desenvolvimento.
 
-## [Unreleased] - 2025-04-22
+## [Unreleased] - 2025-04-23
+
+### Added
+- Nova seção de Relatórios com gráficos visuais interativos:
+  - Gráfico de área para evolução de P&L, investimentos e taxas
+  - Gráfico de pizza para análise por DEX/protocolo
+  - Gráfico de barras para comparação mensal
+  - Filtros temporais (7D, 30D, 90D, 1A, Tudo)
+  - Cards de métricas resumidas
+- Adição da DEX Meteora para a rede Solana
+- Tema claro/escuro com suporte completo em todos os componentes
+
+### Changed
+- Melhoria na interface com uso consistente da cor roxa (#4b206e) como cor secundária
+- Botões e elementos interativos redesenhados com nova paleta de cores
+- Tema escuro definido como padrão
+- Cards adaptados para uso de fundo verde/vermelho baseado nos valores em ambos temas
+- Abas de navegação reformuladas para incluir seção de relatórios
+
+## [2025-04-22]
+
 
 ### Removed
 - Removida a funcionalidade de rastreamento de carteiras por endereço devido a limitações técnicas e foco no gerenciamento manual.

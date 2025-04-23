@@ -2,9 +2,9 @@
 
 ## Visão Geral do Projeto
 
-O Dashboard de Pools de Liquidez é uma aplicação web construída com Next.js que permite aos usuários gerenciar e monitorar suas posições em pools de liquidez de exchanges descentralizadas (DEXs). A aplicação oferece recursos para adicionar, editar, duplicar e fechar posições manualmente, além de cálculos automáticos de métricas financeiras como ganhos, rendimento estimado e taxas acumuladas.
+O Dashboard de Pools de Liquidez é uma aplicação web construída com Next.js que permite aos usuários gerenciar e monitorar suas posições em pools de liquidez de exchanges descentralizadas (DEXs). A aplicação oferece recursos para adicionar, editar, duplicar e fechar posições manualmente, além de cálculos automáticos de métricas financeiras como ganhos, rendimento estimado e taxas acumuladas. Também inclui uma ampla seção de relatórios com gráficos interativos para análise de desempenho ao longo do tempo.
 
-Data de atualização: 22/04/2025
+Data de atualização: 23/04/2025
 
 ## Tecnologias Utilizadas
 
@@ -13,6 +13,8 @@ Data de atualização: 22/04/2025
   - Next.js 15.3.0 (App Router)
   - TailwindCSS para estilização
   - Componentes funcionais com Hooks
+  - Recharts para visualizações gráficas
+  - Heroicons para ícones consistentes
 
 - **Autenticação:**
   - Supabase para autenticação e persistência
@@ -41,12 +43,18 @@ pools/
 │   │   ├── AuthForm.tsx           # Formulário de autenticação
 │   │   ├── DashboardCards.tsx     # Cards de métricas do dashboard
 │   │   ├── LogoutButton.tsx       # Botão de logout
-│   │   └── PositionsTable.tsx     # Tabela de posições
+│   │   ├── Navbar.tsx             # Barra de navegação com ícones
+│   │   ├── Notification.tsx       # Componentes de notificação
+│   │   ├── PositionsTable.tsx     # Tabela de posições
+│   │   └── ReportSection.tsx      # Seção de relatórios e gráficos
 │   ├── contexts/            # Contextos React
 │   │   └── AuthContext.tsx  # Contexto de autenticação
 │   └── lib/                 # Bibliotecas e utilitários
-│       └── supabaseClient.ts # Cliente Supabase
+│       ├── supabaseClient.ts # Cliente Supabase
+│       └── supabaseData.ts   # Funções para manipulação de dados
 ├── tailwind.config.js       # Configuração do Tailwind CSS
+├── CHANGELOG.md             # Histórico de mudanças
+├── TECHNICAL.md             # Documentação técnica
 └── tsconfig.json            # Configuração do TypeScript
 ```
 
@@ -56,16 +64,18 @@ pools/
 
 Este é o componente raiz da aplicação que contém a lógica principal e o estado. Ele gerencia:
 - Lista de posições abertas e fechadas
-- Tabs para alternar entre posições abertas e fechadas
+- Tabs para alternar entre posições abertas, fechadas e relatórios
 - Integração com LocalStorage para persistência
 - Funcionalidades de exportação/importação
+- Alternância entre temas claro e escuro
 - Renderização condicional baseada no estado de autenticação
 
 **Estado Principal:**
 - `positions`: Array com posições abertas
 - `closedPositions`: Array com posições fechadas
-- `tab`: Estado atual da aba ('open' ou 'closed')
+- `tab`: Estado atual da aba ('open', 'closed' ou 'reports')
 - `modalOpen`: Controla a exibição do modal de adição/edição
+- `isDarkMode`: Controla o tema visual da aplicação
 
 ### 2. `AddPositionModal.tsx`
 
@@ -81,6 +91,7 @@ Tabela responsiva que exibe as posições com as seguintes funcionalidades:
 - Exibição visual da posição atual no intervalo de preço (barra colorida)
 - Indicadores visuais para valores P&L positivos/negativos
 - Diferentes modos para posições abertas e fechadas
+- Suporte completo para tema claro/escuro
 
 ### 4. `DashboardCards.tsx`
 
@@ -88,9 +99,18 @@ Componente que exibe métricas agregadas, incluindo:
 - Valor total investido
 - Valor atual total
 - Ganhos totais (coletados e não coletados)
-- P&L total
+- P&L total (com destaque visual verde/vermelho)
 - Rendimento estimado (com seleção de período)
 - Taxas estimadas (com seleção de período)
+
+### 5. `ReportSection.tsx`
+
+Componente que implementa a seção de relatórios e análises, incluindo:
+- Visualização de dados temporais (gráfico de área e barras)
+- Análise por DEX/protocolo (gráfico de pizza)
+- Filtros de período (7D, 30D, 90D, 1A, Tudo)
+- Cards de resumo estatístico
+- Suporte para diferentes métricas (P&L, Investimentos, Taxas, Protocolos)
 
 ## Tipos e Interfaces Principais
 
@@ -197,12 +217,19 @@ A interface é responsiva e se adapta a diferentes tamanhos de tela:
 
 ## Próximos Passos e Melhorias Potenciais
 
-1. **Sincronização de Dados:**
+1. **Aprimoramento dos Relatórios:**
+   - Exportação de relatórios em PDF
+   - Gráficos comparativos entre diferentes períodos
+   - Previsões baseadas em tendências históricas
+
+2. **Sincronização de Dados:**
    - Migrar dados do LocalStorage para Supabase para sincronização entre dispositivos
 
-2. **Melhorias de UI/UX:**
-   - Adicionar dark/light mode
-   - Implementar dashboard personalizado
+3. **Melhorias de UX:**
+   - Personalização das cores e tema pelo usuário
+   - Configuração de alertas para limites de preço
+
+
    - Adicionar mais visualizações e gráficos
 
 3. **Integrações Futuras:**

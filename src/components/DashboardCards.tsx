@@ -67,6 +67,8 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
 
   // ---------------- Fim do Cálculo Refatorado ------------------
 
+  // const periodOptions: Record<string, number | null> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365, 'all': null };
+
   const cards = [
     {
       title: 'Total Valor Atual',
@@ -121,7 +123,10 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     },
   ];
 
-  function renderCardValue(card: any) {
+  function renderCardValue(card: {
+    value: number | string;
+    currency?: boolean;
+  }) {
     if (card.currency) {
       // Valor monetário: separa símbolo e valor
       const value = Number(card.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -2,7 +2,7 @@
 
 ## Descrição
 
-Dashboard para gerenciamento e monitoramento de posições em pools de liquidez de exchanges descentralizadas (DEXs). A aplicação permite adicionar, editar, duplicar e fechar posições manualmente, além de calcular métricas financeiras como ganhos, rendimento estimado e taxas acumuladas.
+Dashboard para gerenciamento e monitoramento de posições em pools de liquidez de exchanges descentralizadas (DEXs). A aplicação permite adicionar, editar, duplicar e fechar posições manualmente, além de calcular métricas financeiras como ganhos, rendimento estimado e taxas acumuladas. Inclui visualizações gráficas avançadas para análise de desempenho ao longo do tempo.
 
 ## Funcionalidades
 
@@ -10,8 +10,12 @@ Dashboard para gerenciamento e monitoramento de posições em pools de liquidez 
 - Cálculos automáticos de métricas financeiras
 - Persistência local com localStorage e/ou Supabase
 - Exportação e importação de dados via JSON
-- Modo escuro/claro
+- Tema escuro (padrão) e claro com alternância dinâmica
+- Relatórios visuais com gráficos interativos (evolução de P&L, taxas e investimentos)
+- Filtros temporais para análise de dados (7D, 30D, 90D, 1A, Tudo)
+- Análise de desempenho por DEX/protocolo
 - Autenticação de usuários com Supabase
+- Suporte para múltiplas redes e DEXs
 
 ## Configuração e Instalação
 

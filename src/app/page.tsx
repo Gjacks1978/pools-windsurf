@@ -6,7 +6,6 @@ import { AddPositionModal, Position } from "../components/AddPositionModal";
 import ReportSection from "../components/ReportSection";
 import { useAuth } from "../contexts/AuthContext";
 import AuthForm from "../components/AuthForm";
-import LogoutButton from "../components/LogoutButton";
 import * as supabaseData from "../lib/supabaseData";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { 
@@ -56,7 +55,7 @@ export default function Home() {
   // Carregar tema salvo ao inicializar
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     // Por padrão, usar tema escuro (preferencia do usuário), mas respeitar configuração salva
     const shouldUseDarkMode = savedTheme !== null ? JSON.parse(savedTheme) : true;

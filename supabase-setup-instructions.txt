@@ -1,0 +1,15 @@
+INSTRUÇÕES PARA CONFIGURAR O SUPABASE
+
+1. Crie um arquivo chamado .env.local na raiz do projeto com o seguinte conteúdo:
+
+NEXT_PUBLIC_SUPABASE_URL=https://kysauxdsdzhghptfcpjy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5c2F1eGRzZHpoZ2hwdGZjcGp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4NDU4NzksImV4cCI6MjA2MDQyMTg3OX0.xXSUNF5hDY7bpVe92MqmCjp-loo8mkuBnu4yuG-AS3k
+
+2. Após criar o arquivo, reinicie o servidor de desenvolvimento com:
+   npm run dev
+
+3. As credenciais serão carregadas automaticamente e o aplicativo se conectará ao Supabase.
+
+4. Para testar se a conexão foi estabelecida corretamente, utilize a função de login no aplicativo.
+
+Observação: O arquivo .env.local não deve ser compartilhado ou incluído no controle de versão.

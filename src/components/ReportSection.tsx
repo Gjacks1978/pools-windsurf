@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Position } from './AddPositionModal';
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
@@ -16,7 +16,7 @@ const COLORS = ['#4b206e', '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE'
 
 const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPositions }) => {
   const [timeFilter, setTimeFilter] = useState<'7d' | '30d' | '90d' | '1y' | 'all'>('all');
-  const [reportType, setReportType] = useState<'pnl' | 'investments' | 'protocol' | 'fees'>('pnl');
+  const [reportType, setReportType] = useState<'pnl' | 'investments' | 'protocol' | 'fees' | 'count'>('pnl');
   
   // Função para filtrar posições por data
   const filterByDate = (pos: Position[], days: number | null) => {
@@ -73,7 +73,7 @@ const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPosition
     })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     // Acumular valores ao longo do tempo
-    let cumulativeData = timelineData.reduce((acc, item, index) => {
+    const cumulativeData = timelineData.reduce((acc, item, index) => {
       if (index === 0) {
         acc.push({
           ...item,
@@ -91,7 +91,16 @@ const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPosition
         });
       }
       return acc;
-    }, [] as any[]);
+    }, [] as Array<{
+      date: string;
+      invested: number;
+      pnl: number;
+      fees: number;
+      count: number;
+      cumulativePnl: number;
+      cumulativeFees: number;
+      cumulativeInvested: number;
+    }>);
     
     // Agrupar por DEX (usando dex como protocolo)
     const protocolData = filteredPositions.reduce((acc, position) => {
@@ -200,7 +209,7 @@ const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPosition
             ].map(period => (
               <button
                 key={period.id}
-                onClick={() => setTimeFilter(period.id as any)}
+                onClick={() => setTimeFilter(period.id as '7d' | '30d' | '90d' | '1y' | 'all')}
                 className={`px-3 py-1 text-xs rounded ${
                   timeFilter === period.id 
                     ? 'bg-[#4b206e] text-white' 
@@ -224,7 +233,7 @@ const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPosition
             ].map(type => (
               <button
                 key={type.id}
-                onClick={() => setReportType(type.id as any)}
+                onClick={() => setReportType(type.id as 'pnl' | 'investments' | 'fees' | 'count')}
                 className={`px-3 py-1 text-xs rounded ${
                   reportType === type.id 
                     ? 'bg-[#4b206e] text-white' 
@@ -365,7 +374,7 @@ const ReportSection: React.FC<ReportSectionProps> = ({ positions, closedPosition
                     reportType === 'investments' ? 'Investido' : 
                     reportType === 'fees' ? 'Taxas' : 
                     'Posições'
-                  ]}
+                  ] as [string, string]}
                 />
                 <Legend />
               </PieChart>

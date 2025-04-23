@@ -80,7 +80,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
             {positions.length === 0 ? (
               <tr>
                 <td colSpan={11} className="text-center py-8 text-gray-500 dark:text-[#71717a]">
-                  Nenhuma posição aberta encontrada. Adicione uma posição manualmente usando o botão "Adicionar Posição".
+                  Nenhuma posição aberta encontrada. Adicione uma posição manualmente usando o botão &quot;Adicionar Posição&quot;.
                 </td>
               </tr>
             ) : (
