@@ -6,13 +6,70 @@ import { AddPositionModal, Position } from "../components/AddPositionModal";
 import { useAuth } from "../contexts/AuthContext";
 import AuthForm from "../components/AuthForm";
 import LogoutButton from "../components/LogoutButton";
+import * as supabaseData from "../lib/supabaseData";
+import { isSupabaseConfigured } from "../lib/supabaseClient";
+import { 
+  ArrowRightOnRectangleIcon, 
+  ArrowLeftOnRectangleIcon,
+  Cog6ToothIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  SunIcon,
+  MoonIcon
+} from "@heroicons/react/24/outline";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const [showSaved, setShowSaved] = useState(false);
   const [importError, setImportError] = useState<string|null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [syncError, setSyncError] = useState<string|null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Função para alternar entre temas light e dark
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    
+    // Salvar preferência no localStorage
+    localStorage.setItem('darkMode', JSON.stringify(newTheme));
+    
+    // Aplicar tema ao documento
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  };
+  
+  // Função para fazer upload do arquivo
+  const handleImportClick = () => {
+    document.getElementById('file-input')?.click();
+  };
+  
+  // Carregar tema salvo ao inicializar
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Por padrão, usar tema escuro (preferencia do usuário), mas respeitar configuração salva
+    const shouldUseDarkMode = savedTheme !== null ? JSON.parse(savedTheme) : true;
+    
+    setIsDarkMode(shouldUseDarkMode);
+    
+    if (shouldUseDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  }, []);
 
   // Exporta dados como JSON
   function handleExport() {
@@ -32,17 +89,33 @@ export default function Home() {
   }
 
   // Importa dados de arquivo JSON
-  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const data = JSON.parse(evt.target?.result as string);
         if (!data.positions || !data.closedPositions) throw new Error('Arquivo inválido');
+        
+        // Atualiza estado local
         setPositions(data.positions);
         setClosedPositions(data.closedPositions);
         setImportError(null);
+        
+        // Sincroniza com Supabase se o usuário estiver logado
+        if (user) {
+          try {
+            setIsSaving(true);
+            await supabaseData.importPositions(data.positions, data.closedPositions);
+            setSyncError(null);
+          } catch (error) {
+            console.error('Erro ao sincronizar com Supabase:', error);
+            setSyncError('Erro ao sincronizar com servidor. Os dados foram salvos localmente.');
+          } finally {
+            setIsSaving(false);
+          }
+        }
       } catch {
         setImportError('Arquivo inválido ou corrompido');
       }
@@ -59,28 +132,84 @@ export default function Home() {
   const [editingIdx, setEditingIdx] = useState<number|null>(null);
   const [editInitial, setEditInitial] = useState<Position|null>(null);
 
-  function handleAddPosition(position: Position) {
-    if (editingIdx !== null) {
-      setPositions((prev) => prev.map((p, i) => i === editingIdx ? position : p));
-      setEditingIdx(null);
-      setEditInitial(null);
-    } else {
-      setPositions((prev) => [...prev, position]);
+  async function handleAddPosition(position: Position) {
+    try {
+      if (editingIdx !== null) {
+        // Atualiza estado local
+        setPositions((prev) => prev.map((p, i) => i === editingIdx ? position : p));
+        setEditingIdx(null);
+        setEditInitial(null);
+        
+        // Sincroniza com Supabase se o usuário estiver logado
+        if (user) {
+          setIsSaving(true);
+          await supabaseData.updatePosition(position);
+        }
+      } else {
+        // Atualiza estado local
+        setPositions((prev) => [...prev, position]);
+        
+        // Sincroniza com Supabase se o usuário estiver logado
+        if (user) {
+          setIsSaving(true);
+          await supabaseData.addPosition(position);
+        }
+      }
+      setSyncError(null);
+    } catch (error) {
+      console.error('Erro ao salvar posição:', error);
+      setSyncError('Erro ao salvar no servidor. Os dados foram salvos localmente.');
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  function handleRemove(idx: number) {
-    setPositions((prev) => prev.filter((_, i) => i !== idx));
+  async function handleRemove(idx: number) {
+    try {
+      const positionToRemove = positions[idx];
+      
+      // Atualiza estado local
+      setPositions((prev) => prev.filter((_, i) => i !== idx));
+      
+      // Sincroniza com Supabase se o usuário estiver logado
+      if (user) {
+        setIsSaving(true);
+        await supabaseData.removePosition(positionToRemove.created);
+      }
+      setSyncError(null);
+    } catch (error) {
+      console.error('Erro ao remover posição:', error);
+      setSyncError('Erro ao sincronizar com servidor. Os dados foram salvos localmente.');
+    } finally {
+      setIsSaving(false);
+    }
   }
-  function handleClosePosition(idx: number) {
-    setPositions((prevPositions) => {
-      const pos = prevPositions[idx];
-      setClosedPositions((prevClosed) => {
-        if (prevClosed.some(p => p.created === pos.created)) return prevClosed;
-        return [pos, ...prevClosed];
+  async function handleClosePosition(idx: number) {
+    try {
+      const positionToClose = positions[idx];
+      
+      // Atualiza estado local
+      setPositions((prevPositions) => {
+        const pos = prevPositions[idx];
+        setClosedPositions((prevClosed) => {
+          if (prevClosed.some(p => p.created === pos.created)) return prevClosed;
+          return [pos, ...prevClosed];
+        });
+        return prevPositions.filter((_, i) => i !== idx);
       });
-      return prevPositions.filter((_, i) => i !== idx);
-    });
+      
+      // Sincroniza com Supabase se o usuário estiver logado
+      if (user) {
+        setIsSaving(true);
+        await supabaseData.closePosition(positionToClose.created);
+      }
+      setSyncError(null);
+    } catch (error) {
+      console.error('Erro ao fechar posição:', error);
+      setSyncError('Erro ao sincronizar com servidor. Os dados foram salvos localmente.');
+    } finally {
+      setIsSaving(false);
+    }
   }
   function handleDuplicate(idx: number) {
     setPositions((prev) => {
@@ -94,53 +223,134 @@ export default function Home() {
     setModalOpen(true);
   }
 
-  function handleRemoveClosed(idx: number) {
-    setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
+  async function handleRemoveClosed(idx: number) {
+    try {
+      const positionToRemove = closedPositions[idx];
+      
+      // Atualiza estado local
+      setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
+      
+      // Sincroniza com Supabase se o usuário estiver logado
+      if (user) {
+        setIsSaving(true);
+        await supabaseData.removePosition(positionToRemove.created);
+      }
+      setSyncError(null);
+    } catch (error) {
+      console.error('Erro ao remover posição fechada:', error);
+      setSyncError('Erro ao sincronizar com servidor. Os dados foram salvos localmente.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
+  // Carrega dados iniciais do Supabase ou localStorage
   useEffect(() => {
-    const savedPositions = localStorage.getItem('positions');
-    const savedClosedPositions = localStorage.getItem('closedPositions');
-    if (savedPositions) {
+    const loadData = async () => {
       try {
-        setPositions(JSON.parse(savedPositions));
-      } catch {
-        console.error("Failed to parse positions from localStorage");
-        // Optionally clear corrupted data
-        // localStorage.removeItem('positions');
+        // Primeiro carrega os dados do localStorage para garantir que temos algo para mostrar rapidamente
+        loadFromLocalStorage();
+        
+        // Se não há um usuário logado ou o Supabase não está configurado, usamos apenas localStorage
+        if (!user || !isSupabaseConfigured()) {
+          if (user && !isSupabaseConfigured()) {
+            console.warn('Supabase não está configurado. Usando apenas dados locais.');
+          }
+          return; // Retorna cedo para usar apenas dados locais
+        }
+        
+        // Tenta carregar do Supabase apenas se o usuário estiver logado e o Supabase estiver configurado
+        try {
+          setIsSaving(true); // Indica que estamos carregando
+          
+          // Busca posições abertas e fechadas do Supabase
+          const [openPositions, closedPositions] = await Promise.all([
+            supabaseData.getPositions(),
+            supabaseData.getClosedPositions()
+          ]);
+          
+          // Se foram recebidos dados válidos (arrays podem estar vazios, mas devem ser arrays)
+          if (Array.isArray(openPositions) && Array.isArray(closedPositions)) {
+            // Só atualiza posições abertas se houver dados no Supabase
+            if (openPositions.length > 0) {
+              setPositions(openPositions);
+              console.log('Posições abertas carregadas do Supabase');
+            } else {
+              console.log('Nenhuma posição aberta encontrada no Supabase. Mantendo dados locais.');
+            }
+            
+            // Só atualiza posições fechadas se houver dados no Supabase
+            if (closedPositions.length > 0) {
+              setClosedPositions(closedPositions);
+              console.log('Posições fechadas carregadas do Supabase');
+            } else {
+              console.log('Nenhuma posição fechada encontrada no Supabase. Mantendo dados locais.');
+            }
+            
+            // Limpa mensagem de erro
+            setSyncError(null);
+          } else {
+            // Caso ocorra algum problema com os dados, mantém o localStorage
+            console.warn('Dados do servidor em formato inválido. Mantendo dados locais.');
+          }
+        } catch (error) {
+          // Mudar para console.warn para não assustar o usuário, já que os dados locais ainda funcionam
+          console.warn('Aviso: Erro ao buscar dados do Supabase. Usando dados locais.', error);
+          // Não mostra mensagem de erro para o usuário já que os dados locais estão funcionando
+        } finally {
+          setIsSaving(false); // Fim do carregamento
+        }
+      } finally {
+        setIsClientLoaded(true); // Marca o cliente como carregado após a tentativa de carregamento
       }
-    }
-    if (savedClosedPositions) {
-       try {
-        setClosedPositions(JSON.parse(savedClosedPositions));
-      } catch {
-        console.error("Failed to parse closedPositions from localStorage");
-        // Optionally clear corrupted data
-        // localStorage.removeItem('closedPositions');
+    };
+    
+    // Função para carregar dados do localStorage
+    const loadFromLocalStorage = () => {
+      const savedPositions = localStorage.getItem('positions');
+      const savedClosedPositions = localStorage.getItem('closedPositions');
+      
+      if (savedPositions) {
+        try {
+          setPositions(JSON.parse(savedPositions));
+        } catch {
+          console.error("Failed to parse positions from localStorage");
+        }
       }
-    }
-    setIsClientLoaded(true); // Mark client as loaded after attempting to load
-  }, []); // Run only once on mount
+      
+      if (savedClosedPositions) {
+        try {
+          setClosedPositions(JSON.parse(savedClosedPositions));
+        } catch {
+          console.error("Failed to parse closedPositions from localStorage");
+        }
+      }
+    };
+    
+    loadData();
+  }, [user]); // Roda quando o componente é montado ou o status de autenticação muda
 
+  // Salva posições abertas no localStorage
   useEffect(() => {
     if (isClientLoaded) { // Only save after initial client load is complete
       localStorage.setItem('positions', JSON.stringify(positions));
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 1200);
+      
+      if (!isSaving) { // Evita mostrar o aviso durante operações que já mostram feedback
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 1200);
+      }
     }
-  }, [positions, isClientLoaded]); // Re-run if positions or isClientLoaded changes
+  }, [positions, isClientLoaded, isSaving]); 
 
+  // Salva posições fechadas no localStorage
   useEffect(() => {
     if (isClientLoaded) { // Only save after initial client load is complete
       localStorage.setItem('closedPositions', JSON.stringify(closedPositions));
     }
-  }, [closedPositions, isClientLoaded]); // Re-run if closedPositions or isClientLoaded changes
+  }, [closedPositions, isClientLoaded]);
 
   // Cálculos das pools fechadas
   const pnlTotalFechadas = closedPositions.reduce((acc, p) => acc + (p.current + p.collected + p.uncollected - p.invested), 0);
-  let pnlBg = 'bg-[#18181b]';
-  if (pnlTotalFechadas > 0) pnlBg = 'bg-[#071f14]';
-  if (pnlTotalFechadas < 0) pnlBg = 'bg-[#1f0d07]';
 
   if (!isClientLoaded) {
     // Render a loading state or null during SSR/initial hydration
@@ -165,63 +375,156 @@ export default function Home() {
     );
   }
 
+
+
   // Render dashboard only if user is logged in
   return (
-    <div className="min-h-screen bg-[#09090b] p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
+    <div className="min-h-screen bg-white dark:bg-[#09090b] text-black dark:text-white p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
+      {/* Ícones do Menu no canto superior direito */}
+      <div className="fixed top-4 right-4 flex items-center space-x-2 z-50">
+        {/* Importar */}
+        <button 
+          onClick={handleImportClick}
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+          title="Importar dados"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+        </button>
+        <input 
+          id="file-input" 
+          type="file" 
+          accept=".json" 
+          onChange={handleImport} 
+          className="hidden" 
+        />
+        
+        {/* Exportar */}
+        <button 
+          onClick={handleExport}
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+          title="Exportar dados"
+        >
+          <ArrowUpTrayIcon className="h-5 w-5" />
+        </button>
+        
+        {/* Alternar Tema */}
+        <button 
+          onClick={toggleTheme}
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+          title={isDarkMode ? "Mudar para tema claro" : "Mudar para tema escuro"}
+        >
+          {isDarkMode ? (
+            <SunIcon className="h-5 w-5" />
+          ) : (
+            <MoonIcon className="h-5 w-5" />
+          )}
+        </button>
+        
+        {/* Configurações */}
+        <div className="relative">
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+            title="Configurações"
+          >
+            <Cog6ToothIcon className="h-5 w-5" />
+          </button>
+          
+          {/* Menu de configurações */}
+          {showSettings && (
+            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]">
+              <div className="py-1">
+                <a href="#" className="block px-4 py-2 text-sm text-black dark:text-white hover:bg-gray-100 dark:hover:bg-[#232328]">
+                  Preferências
+                </a>
+                <a href="#" className="block px-4 py-2 text-sm text-black dark:text-white hover:bg-gray-100 dark:hover:bg-[#232328]">
+                  Configurações da conta
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Auth */}
+        {!loading && (
+          user ? (
+            <button 
+              onClick={signOut}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+              title="Sair"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            </button>
+          ) : (
+            <button 
+              onClick={() => window.location.reload()}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#232328] text-black dark:text-white transition-colors"
+              title="Entrar"
+            >
+              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            </button>
+          )
+        )}
+      </div>
+      
       {/* Aviso de dados salvos */}
       {showSaved && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
           Dados salvos!
         </div>
       )}
       {/* Aviso de erro de importação */}
       {importError && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-red-700 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-red-700 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
           {importError}
         </div>
       )}
-      {/* Botões de exportação/importação */}
-      <div className="w-full max-w-7xl flex justify-end gap-2 mb-2">
-        <button onClick={handleExport} className="px-3 py-1 rounded bg-[#232328] text-white text-xs font-semibold border border-[#39393f] hover:bg-[#39393f]">Exportar Backup</button>
-        <label className="px-3 py-1 rounded bg-[#232328] text-white text-xs font-semibold border border-[#39393f] hover:bg-[#39393f] cursor-pointer">
-          Importar Backup
-          <input type="file" accept="application/json" className="hidden" onChange={handleImport} />
-        </label>
-      </div>
+      {/* Aviso de erro de sincronização */}
+      {syncError && (
+        <div className="fixed top-32 left-1/2 -translate-x-1/2 bg-yellow-600 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-fade-in-out">
+          {syncError}
+        </div>
+      )}
+      {/* Indicador de salvamento */}
+      {isSaving && (
+        <div className="fixed top-16 right-24 bg-blue-600 text-white px-6 py-2 rounded-xl shadow-lg z-50 animate-pulse">
+          Sincronizando...
+        </div>
+      )}
+      
       <div className="w-full max-w-7xl mb-4">
-        {/* Title and Logout Button */}
+        {/* Apenas o título, sem botão de logout duplicado */}
         <div className="flex justify-between items-center mb-4">
-          <div className="font-bold text-white text-3xl md:text-4xl">Dashboard de Pools de Liquidez</div>
-          <LogoutButton />
+          <div className="font-bold text-black dark:text-white text-3xl md:text-4xl">Dashboard de Pools de Liquidez</div>
         </div>
         <DashboardCards positions={positions} />
       </div>
       <div className="w-full max-w-7xl mt-8">
         <div className="flex items-center justify-end mb-2">
-          <button className="px-3 py-1 rounded bg-white text-sm text-black font-semibold" onClick={() => setModalOpen(true)}>+ Adicionar Posição</button>
+          <button className="px-4 py-2 rounded bg-[#4b206e] hover:bg-[#3a1857] text-sm text-white font-semibold transition-colors" onClick={() => setModalOpen(true)}>+ Adicionar Posição</button>
         </div>
         <div className="flex gap-2 mb-4">
-          <button onClick={() => setTab('open')} className={`px-4 py-1 rounded ${tab==='open' ? 'bg-[#232328] text-white' : 'bg-transparent text-[#a1a1aa]'} text-sm font-semibold`}>Posições abertas ({positions.length})</button>
-          <button onClick={() => setTab('closed')} className={`px-4 py-1 rounded ${tab==='closed' ? 'bg-[#232328] text-white' : 'bg-transparent text-[#a1a1aa]'} text-sm font-semibold`}>Posições fechadas ({closedPositions.length})</button>
+          <button onClick={() => setTab('open')} className={`px-4 py-1 rounded ${tab==='open' ? 'bg-[#f1e6f9] dark:bg-[#4b206e] text-[#4b206e] dark:text-white' : 'bg-transparent text-gray-500 dark:text-[#a1a1aa]'} text-sm font-semibold transition-colors`}>Posições abertas ({positions.length})</button>
+          <button onClick={() => setTab('closed')} className={`px-4 py-1 rounded ${tab==='closed' ? 'bg-[#f1e6f9] dark:bg-[#4b206e] text-[#4b206e] dark:text-white' : 'bg-transparent text-gray-500 dark:text-[#a1a1aa]'} text-sm font-semibold transition-colors`}>Posições fechadas ({closedPositions.length})</button>
         </div>
         {tab === 'closed' && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-6">
             {/* Ganhos Totais */}
-            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
-              <span className="text-xs text-[#a1a1aa] font-medium">Taxas Totais</span>
-              <span className="text-2xl font-semibold text-white">{closedPositions.reduce((acc, p) => acc + p.collected + p.uncollected, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
-              <span className="text-xs text-[#71717a]">Taxas combinadas de todas as pools fechadas</span>
+            <div className="bg-white dark:bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-gray-300 dark:border-[#232328] min-w-[160px]">
+              <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">Taxas Totais</span>
+              <span className="text-2xl font-semibold text-black dark:text-white">{closedPositions.reduce((acc, p) => acc + p.collected + p.uncollected, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
+              <span className="text-xs text-gray-500 dark:text-[#71717a]">Taxas combinadas de todas as pools fechadas</span>
             </div>
             {/* P&L Total */}
-            <div className={`${pnlBg} rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]`}>
-              <span className="text-xs text-[#a1a1aa] font-medium">P&L Total</span>
-              <span className="text-2xl font-semibold text-white">{pnlTotalFechadas.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
-              <span className="text-xs text-[#71717a]">Lucro/perda combinado de todas as pools fechadas</span>
+            <div className={`${pnlTotalFechadas > 0 ? 'bg-white dark:bg-[#071f14]' : pnlTotalFechadas < 0 ? 'bg-white dark:bg-[#1f0d07]' : 'bg-white dark:bg-[#18181b]'} rounded-xl p-4 flex flex-col gap-1 border border-gray-300 dark:border-[#232328] min-w-[160px]`}>
+              <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">P&L Total</span>
+              <span className="text-2xl font-semibold text-black dark:text-white">{pnlTotalFechadas.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
+              <span className="text-xs text-gray-500 dark:text-[#71717a]">Lucro/perda combinado de todas as pools fechadas</span>
             </div>
             {/* APR Anual Total % */}
-            <div className="bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px]">
-              <span className="text-xs text-[#a1a1aa] font-medium">APR Anual Total %</span>
-              <span className="text-2xl font-semibold text-white">
+            <div className="bg-white dark:bg-[#18181b] rounded-xl p-4 flex flex-col gap-1 border border-gray-300 dark:border-[#232328] min-w-[160px]">
+              <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">APR Anual Total %</span>
+              <span className="text-2xl font-semibold text-black dark:text-white">
                 {(() => {
                   let totalInvestido = 0;
                   let totalPNL = 0;
@@ -265,9 +568,26 @@ export default function Home() {
             positions={closedPositions} 
             onRemove={handleRemoveClosed} 
             closed={true} 
-            onRestore={(idx) => {
-              setPositions((prev) => [closedPositions[idx], ...prev]);
-              setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
+            onRestore={async (idx) => {
+              try {
+                const positionToRestore = closedPositions[idx];
+                
+                // Atualiza estado local
+                setPositions((prev) => [closedPositions[idx], ...prev]);
+                setClosedPositions((prev) => prev.filter((_, i) => i !== idx));
+                
+                // Sincroniza com Supabase se o usuário estiver logado
+                if (user) {
+                  setIsSaving(true);
+                  await supabaseData.restorePosition(positionToRestore.created);
+                }
+                setSyncError(null);
+              } catch (error) {
+                console.error('Erro ao restaurar posição:', error);
+                setSyncError('Erro ao sincronizar com servidor. Os dados foram salvos localmente.');
+              } finally {
+                setIsSaving(false);
+              }
             }} 
           />
         )}

@@ -35,7 +35,7 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
       totalInvestedDays += invested * days;
     }
     if (days > 0) {
-       totalDailyFeesAccumulated += fees / days;
+      totalDailyFeesAccumulated += fees / days;
     }
   });
 
@@ -58,64 +58,100 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
   // Cálculo Taxas Estimadas (projeção do total diário)
   let taxasEst = 0;
   if (taxasPeriodo === "Diário") {
-      taxasEst = totalDailyFeesAccumulated;
+    taxasEst = totalDailyFeesAccumulated;
   } else if (taxasPeriodo === "Mensal") {
-      taxasEst = totalDailyFeesAccumulated * 30;
+    taxasEst = totalDailyFeesAccumulated * 30;
   } else { // Anual
-      taxasEst = totalDailyFeesAccumulated * 365;
+    taxasEst = totalDailyFeesAccumulated * 365;
   }
+
   // ---------------- Fim do Cálculo Refatorado ------------------
 
   const cards = [
-    { label: "Valor Total", value: valorTotal, desc: "Valor atual de liquidez em todas as pools", currency: true },
-    { label: "Total Investido", value: totalInvestido, desc: "Investimento inicial em todas as pools", currency: true },
-    { label: "Taxas Totais", value: ganhosTotais, desc: "Taxas combinadas de todas as pools", currency: true },
-    { label: "P&L Total", value: pnlTotal, desc: "Lucro/perda combinado de todas as pools", currency: true },
-    { label: "Rendimento Est.", value: rendimentoMedio, desc: "Rendimento médio ponderado", select: true, selectOptions: RENDIMENTO_OPTIONS, selectValue: rendimentoPeriodo, setSelect: setRendimentoPeriodo, selectLabel: "Período do Rendimento:" },
-    { label: "Taxas Est.", value: taxasEst, desc: "Taxas estimadas ganhas", currency: true, select: true, selectOptions: TAXAS_OPTIONS, selectValue: taxasPeriodo, setSelect: setTaxasPeriodo, selectLabel: "Período das Taxas:" },
+    {
+      title: 'Total Valor Atual',
+      value: valorTotal,
+      bg: pnlTotal > 0 ? 'bg-white dark:bg-[#071f14] border border-gray-300 dark:border-[#232328]' : 
+          pnlTotal < 0 ? 'bg-white dark:bg-[#1f0d07] border border-gray-300 dark:border-[#232328]' : 
+          'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Valor total de todas as posições abertas',
+      currency: true
+    },
+    {
+      title: 'Total Investido',
+      value: totalInvestido,
+      bg: 'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Valor total investido em todas as posições abertas',
+      currency: true
+    },
+    {
+      title: 'Taxas Totais',
+      value: ganhosTotais,
+      bg: 'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Taxas combinadas de todas as pools',
+      currency: true
+    },
+    {
+      title: 'P&L Total',
+      value: pnlTotal,
+      bg: pnlTotal > 0 ? 'bg-white dark:bg-[#071f14] border border-gray-300 dark:border-[#232328]' : 
+          pnlTotal < 0 ? 'bg-white dark:bg-[#1f0d07] border border-gray-300 dark:border-[#232328]' : 
+          'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Lucro/perda combinado de todas as pools',
+      currency: true
+    },
+    {
+      title: 'Rendimento Estimado',
+      value: rendimentoMedio,
+      bg: 'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Rendimento anual estimado baseado em taxas',
+      selectValue: rendimentoPeriodo,
+      setSelect: setRendimentoPeriodo,
+      selectOptions: RENDIMENTO_OPTIONS
+    },
+    {
+      title: 'Taxas Estimadas',
+      value: taxasEst,
+      bg: 'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
+      desc: 'Taxas estimadas para o período selecionado',
+      currency: true,
+      selectValue: taxasPeriodo,
+      setSelect: setTaxasPeriodo,
+      selectOptions: TAXAS_OPTIONS
+    },
   ];
 
   function renderCardValue(card: any) {
     if (card.currency) {
       // Valor monetário: separa símbolo e valor
       const value = Number(card.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      return <><span className="text-xs align-top mr-0.5 text-[#a1a1aa]">$</span><span>{value}</span></>;
+      return <><span className="text-xs align-top mr-0.5 text-gray-400 dark:text-[#a1a1aa]">$</span><span>{value}</span></>;
     }
     return card.value;
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full items-start">
-        {cards.map((card, idx) => (
-          // Card especial para P&L Total com bg condicional
-
-          <div
-            key={idx}
-            className={`rounded-xl p-4 flex flex-col gap-1 border border-[#232328] min-w-[160px] h-full items-start justify-start ${card.label === 'P&L Total' ? (pnlTotal > 0 ? 'bg-[#071f14]' : pnlTotal < 0 ? 'bg-[#1f0d07]' : 'bg-[#18181b]') : 'bg-[#18181b]'}`}
-            style={{ minHeight: card.select ? 180 : undefined }}
-          >
-            <span className="text-xs text-[#a1a1aa] font-medium">
-              {card.label}
-            </span>
-            <span className="text-3xl font-semibold text-white">{renderCardValue(card)}</span>
-            <span className="text-xs text-[#71717a] mb-2">{card.desc}</span>
-            {card.select && (
-              <div className="mt-auto w-full flex flex-col items-start">
-                <select
-                  className="bg-[#232328] text-xs rounded px-2 py-1 border-none outline-none w-full text-white"
-                  value={card.selectValue}
-                  onChange={e => card.setSelect(e.target.value)}
-                >
-                  {card.selectOptions?.map((opt) => (
-                    <option key={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
+      {cards.map((card, i) => (
+        <div key={i} className={`${card.bg} rounded-xl p-4 flex flex-col gap-1 min-w-[160px] relative ${card.selectOptions ? 'pb-12' : ''}`}>
+          <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">{card.title}</span>
+          <span className="text-2xl font-semibold text-black dark:text-white">{renderCardValue(card)}</span>
+          <span className="text-xs text-gray-500 dark:text-[#71717a]">{card.desc}</span>
+          {card.selectOptions && (
+            <div className="absolute bottom-3 right-3">
+              <select
+                className="bg-transparent text-xs text-black dark:text-white p-1 rounded border border-gray-300 dark:border-[#232328]"
+                value={card.selectValue}
+                onChange={e => card.setSelect(e.target.value)}
+              >
+                {card.selectOptions.map((opt: string) => (
+                  <option key={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
