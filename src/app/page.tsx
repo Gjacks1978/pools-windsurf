@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { DashboardCards } from "../components/DashboardCards";
 import { PositionsTable } from "../components/PositionsTable";
 import { AddPositionModal, Position } from "../components/AddPositionModal";
+import ReportSection from "../components/ReportSection";
 import { useAuth } from "../contexts/AuthContext";
 import AuthForm from "../components/AuthForm";
 import LogoutButton from "../components/LogoutButton";
@@ -127,7 +128,7 @@ export default function Home() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
 
-  const [tab, setTab] = useState<'open'|'closed'>('open');
+  const [tab, setTab] = useState<'open' | 'closed' | 'reports'>('open');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number|null>(null);
   const [editInitial, setEditInitial] = useState<Position|null>(null);
@@ -506,6 +507,7 @@ export default function Home() {
         <div className="flex gap-2 mb-4">
           <button onClick={() => setTab('open')} className={`px-4 py-1 rounded ${tab==='open' ? 'bg-[#f1e6f9] dark:bg-[#4b206e] text-[#4b206e] dark:text-white' : 'bg-transparent text-gray-500 dark:text-[#a1a1aa]'} text-sm font-semibold transition-colors`}>Posições abertas ({positions.length})</button>
           <button onClick={() => setTab('closed')} className={`px-4 py-1 rounded ${tab==='closed' ? 'bg-[#f1e6f9] dark:bg-[#4b206e] text-[#4b206e] dark:text-white' : 'bg-transparent text-gray-500 dark:text-[#a1a1aa]'} text-sm font-semibold transition-colors`}>Posições fechadas ({closedPositions.length})</button>
+          <button onClick={() => setTab('reports')} className={`px-4 py-1 rounded ${tab==='reports' ? 'bg-[#f1e6f9] dark:bg-[#4b206e] text-[#4b206e] dark:text-white' : 'bg-transparent text-gray-500 dark:text-[#a1a1aa]'} text-sm font-semibold transition-colors`}>Relatórios</button>
         </div>
         {tab === 'closed' && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-6">
@@ -516,7 +518,7 @@ export default function Home() {
               <span className="text-xs text-gray-500 dark:text-[#71717a]">Taxas combinadas de todas as pools fechadas</span>
             </div>
             {/* P&L Total */}
-            <div className={`${pnlTotalFechadas > 0 ? 'bg-white dark:bg-[#071f14]' : pnlTotalFechadas < 0 ? 'bg-white dark:bg-[#1f0d07]' : 'bg-white dark:bg-[#18181b]'} rounded-xl p-4 flex flex-col gap-1 border border-gray-300 dark:border-[#232328] min-w-[160px]`}>
+            <div className={`${pnlTotalFechadas > 0 ? 'bg-green-50 dark:bg-[#071f14] border-green-200 dark:border-[#232328]' : pnlTotalFechadas < 0 ? 'bg-red-50 dark:bg-[#1f0d07] border-red-200 dark:border-[#232328]' : 'bg-white dark:bg-[#18181b] border-gray-300 dark:border-[#232328]'} rounded-xl p-4 flex flex-col gap-1 border min-w-[160px]`}>
               <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">P&L Total</span>
               <span className="text-2xl font-semibold text-black dark:text-white">{pnlTotalFechadas.toLocaleString('pt-BR', { style: 'currency', currency: 'USD' }).replace('US$', '$')}</span>
               <span className="text-xs text-gray-500 dark:text-[#71717a]">Lucro/perda combinado de todas as pools fechadas</span>
@@ -551,6 +553,10 @@ export default function Home() {
               <span className="text-xs text-[#71717a]">APR anual médio ponderado das pools fechadas</span>
             </div>
           </div>
+        )}
+        
+        {tab === 'reports' && (
+          <ReportSection positions={positions} closedPositions={closedPositions} />
         )}
         {tab === 'open' ? (
           <>

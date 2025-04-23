@@ -71,8 +71,8 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     {
       title: 'Total Valor Atual',
       value: valorTotal,
-      bg: pnlTotal > 0 ? 'bg-white dark:bg-[#071f14] border border-gray-300 dark:border-[#232328]' : 
-          pnlTotal < 0 ? 'bg-white dark:bg-[#1f0d07] border border-gray-300 dark:border-[#232328]' : 
+      bg: pnlTotal > 0 ? 'bg-green-50 dark:bg-[#071f14] border border-green-200 dark:border-[#232328]' : 
+          pnlTotal < 0 ? 'bg-red-50 dark:bg-[#1f0d07] border border-red-200 dark:border-[#232328]' : 
           'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
       desc: 'Valor total de todas as posições abertas',
       currency: true
@@ -94,8 +94,8 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     {
       title: 'P&L Total',
       value: pnlTotal,
-      bg: pnlTotal > 0 ? 'bg-white dark:bg-[#071f14] border border-gray-300 dark:border-[#232328]' : 
-          pnlTotal < 0 ? 'bg-white dark:bg-[#1f0d07] border border-gray-300 dark:border-[#232328]' : 
+      bg: pnlTotal > 0 ? 'bg-green-50 dark:bg-[#071f14] border border-green-200 dark:border-[#232328]' : 
+          pnlTotal < 0 ? 'bg-red-50 dark:bg-[#1f0d07] border border-red-200 dark:border-[#232328]' : 
           'bg-white dark:bg-[#18181b] border border-gray-300 dark:border-[#232328]',
       desc: 'Lucro/perda combinado de todas as pools',
       currency: true
