@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { Position } from "./AddPositionModal";
 
-function formatAgo(dateIso: string) {
+function formatAgo(dateIso: string, isClosed: boolean = false) {
   const now = new Date();
   const date = new Date(dateIso);
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return `${diffSec}s atrás`;
+  
+  // Para posições fechadas, não mostrar "atrás"
+  const suffix = isClosed ? '' : ' atrás';
+  
+  if (diffSec < 60) return `${diffSec}s${suffix}`;
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}min atrás`;
+  if (diffMin < 60) return `${diffMin}min${suffix}`;
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h atrás`;
+  if (diffH < 24) return `${diffH}h${suffix}`;
   const diffD = Math.floor(diffH / 24);
-  return `${diffD}d atrás`;
+  return `${diffD}d${suffix}`;
 }
 
 function calcPNL(p: Position) {
@@ -45,10 +49,10 @@ type Props = {
 
 export function PositionsTable({ positions, onRemove, onClosePosition, onDuplicate, onEdit, closed, onRestore }: Props) {
   // Estado para edição inline
-  const [editingCell, setEditingCell] = useState<{row: number, field: 'uncollected' | 'collected', value: number} | null>(null);
+  const [editingCell, setEditingCell] = useState<{row: number, field: 'uncollected' | 'collected' | 'current', value: number} | null>(null);
 
   // Função para salvar edição inline
-  function handleInlineSave(idx: number, field: 'uncollected' | 'collected', value: number) {
+  function handleInlineSave(idx: number, field: 'uncollected' | 'collected' | 'current', value: number) {
     if (isNaN(value)) return;
     // Atualize diretamente o valor localmente (sem abrir modal)
     if (positions[idx]) {
@@ -98,7 +102,21 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     </div>
                   </td>
                   <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal">${p.invested.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal">${p.current.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'current', value: p.current })}>
+                    {editingCell && editingCell.row === idx && editingCell.field === 'current' ? (
+                      <input
+                        type="number"
+                        className="bg-gray-100 dark:bg-[#232328] text-black dark:text-white rounded px-1 py-0.5 w-20 text-center outline-none border border-gray-300 dark:border-[#4b206e] focus:ring-2 focus:ring-blue-500 dark:focus:ring-[#4b206e]"
+                        value={editingCell.value}
+                        autoFocus
+                        onChange={e => setEditingCell({ ...editingCell, value: Number(e.target.value) })}
+                        onBlur={() => handleInlineSave(idx, 'current', editingCell.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleInlineSave(idx, 'current', editingCell.value); }}
+                      />
+                    ) : (
+                      `$${p.current.toFixed(2)}`
+                    )}
+                  </td>
                   <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
                     {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
                       <input
@@ -191,7 +209,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                   </td>
                   <td className="py-2 px-2 text-center">
                     <div className="text-black dark:text-white">{new Date(p.created).toLocaleString()}</div>
-                    <div className="text-[10px] text-gray-500 dark:text-[#a1a1aa]">{formatAgo(p.created)}</div>
+                    <div className="text-[10px] text-gray-500 dark:text-[#a1a1aa]">{formatAgo(p.created, closed)}</div>
                   </td>
                   <td className="py-2 px-2 flex gap-2 justify-center items-center">
                     {!closed && !('isTracked' in p) && (
