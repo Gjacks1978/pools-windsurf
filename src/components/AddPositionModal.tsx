@@ -14,6 +14,7 @@ export type Position = {
   dex: string;
   created: string; // ISO string
   observacoes?: string;
+  poolUrl?: string; // Link para a pool original
   
   // Propriedades para posições rastreadas
   isTracked?: boolean;
@@ -60,6 +61,7 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
     dex: DEXES_BY_NETWORK[NETWORKS[0]][0],
     created: getCurrentDateTimeLocal(),
     observacoes: '',
+    poolUrl: '',
   });
 
   // Atualiza form ao abrir o modal ou ao mudar initialData
@@ -81,6 +83,7 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
           dex: DEXES_BY_NETWORK[NETWORKS[0]][0],
           created: getCurrentDateTimeLocal(),
           observacoes: '',
+          poolUrl: '',
         });
       }
     }
@@ -124,6 +127,7 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
       network: NETWORKS[0],
       dex: DEXES_BY_NETWORK[NETWORKS[0]][0],
       created: new Date().toISOString(),
+      poolUrl: '',
     });
     onClose();
   }
@@ -179,6 +183,16 @@ export function AddPositionModal({ open, onClose, onAdd, initialData }: {
         <label className="text-sm text-[#a1a1aa]">Preço de Entrada (opcional)</label>
         <input name="entryPrice" type="number" placeholder="Preço de Entrada (opcional)" value={form.entryPrice ?? ""} onChange={handleChange} className="px-3 py-2 rounded bg-[#232328] text-white text-sm" />
 
+
+        <label className="text-sm text-[#a1a1aa]">URL da Pool (opcional)</label>
+        <input
+          name="poolUrl"
+          type="url"
+          placeholder="https://app.uniswap.org/..."
+          value={form.poolUrl ?? ''}
+          onChange={handleChange}
+          className="px-3 py-2 rounded bg-[#232328] text-white text-sm w-full"
+        />
 
         <label className="text-sm text-[#a1a1aa]">Observações (opcional)</label>
         <textarea

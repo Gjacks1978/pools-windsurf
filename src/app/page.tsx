@@ -379,7 +379,7 @@ export default function Home() {
 
   // Render dashboard only if user is logged in
   return (
-    <div className="min-h-screen bg-white dark:bg-[#09090b] text-black dark:text-white p-6 md:p-10 flex flex-col gap-8 items-center text-base md:text-lg">
+    <div className="min-h-screen bg-white dark:bg-[#09090b] text-black dark:text-white p-6 pt-20 md:p-10 md:pt-20 flex flex-col gap-8 items-center text-base md:text-lg">
       {/* Ícones do Menu no canto superior direito */}
       <div className="fixed top-4 right-4 flex items-center space-x-2 z-50">
         {/* Importar */}
@@ -492,10 +492,10 @@ export default function Home() {
         </div>
       )}
       
-      <div className="w-full max-w-7xl mb-4">
+      <div className="w-full max-w-7xl mb-4 mt-2">
         {/* Apenas o título, sem botão de logout duplicado */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="font-bold text-black dark:text-white text-3xl md:text-4xl">Dashboard de Pools de Liquidez</div>
+        <div className="flex justify-between items-center mb-4 mt-2">
+          <h1 className="font-bold text-black dark:text-white text-2xl sm:text-3xl md:text-4xl">Dashboard de Pools de Liquidez</h1>
         </div>
         <DashboardCards positions={positions} />
       </div>

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Position } from "./AddPositionModal";
+import { Tooltip } from "./Tooltip";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { MobilePositionCard } from "./MobilePositionCard";
 
 function formatAgo(dateIso: string, isClosed: boolean = false) {
   const now = new Date();
@@ -7,16 +10,9 @@ function formatAgo(dateIso: string, isClosed: boolean = false) {
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
   
-  // Para posições fechadas, não mostrar "atrás"
-  const suffix = isClosed ? '' : ' atrás';
-  
-  if (diffSec < 60) return `${diffSec}s${suffix}`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}min${suffix}`;
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h${suffix}`;
-  const diffD = Math.floor(diffH / 24);
-  return `${diffD}d${suffix}`;
+  // Calcular dias
+  const diffD = Math.floor(diffSec / (60 * 60 * 24));
+  return `${diffD} dias`;
 }
 
 function calcPNL(p: Position) {
@@ -61,23 +57,185 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
     setEditingCell(null);
   }
 
-  return (
-    <div className="bg-white dark:bg-[#18181b] rounded-xl p-6 w-full mt-4 border border-gray-300 dark:border-[#232328] shadow-sm">
+  // Definir tooltips para as colunas da tabela
+  const columnTooltips = {
+    'Pool': (
+      <div>
+        <p className="font-semibold mb-1">Pool</p>
+        <p>Nome da pool de liquidez, incluindo a rede e DEX.</p>
+        <p className="mt-1 text-xs">Exemplo: ETH-USDC • Uniswap V3 • Ethereum</p>
+      </div>
+    ),
+    'Investido': (
+      <div>
+        <p className="font-semibold mb-1">Investido</p>
+        <p>Valor inicial investido na pool.</p>
+        <p className="mt-1 text-xs">Este valor é fixo e não muda com o tempo.</p>
+      </div>
+    ),
+    'Liq. Atual': (
+      <div>
+        <p className="font-semibold mb-1">Liquidez Atual</p>
+        <p>Valor atual da posição na pool.</p>
+        <p className="mt-1 text-xs">Pode ser editado clicando no valor.</p>
+        <p className="mt-1 text-xs">Varia conforme o preço dos tokens e impermanent loss.</p>
+      </div>
+    ),
+    'Não Coletado': (
+      <div>
+        <p className="font-semibold mb-1">Não Coletado</p>
+        <p>Taxas acumuladas que ainda não foram coletadas/reinvestidas.</p>
+        <p className="mt-1 text-xs">Pode ser editado clicando no valor.</p>
+      </div>
+    ),
+    'Coletado': (
+      <div>
+        <p className="font-semibold mb-1">Coletado</p>
+        <p>Total de taxas já coletadas/reinvestidas desde o início.</p>
+        <p className="mt-1 text-xs">Pode ser editado clicando no valor.</p>
+      </div>
+    ),
+    'PNL': (
+      <div>
+        <p className="font-semibold mb-1">PNL (Profit & Loss)</p>
+        <p>Lucro ou prejuízo da posição.</p>
+        <p className="mt-1">Fórmula: Liq. Atual + Coletado + Não Coletado - Investido</p>
+        <p className="mt-1 text-xs">Verde indica lucro, vermelho indica prejuízo.</p>
+      </div>
+    ),
+    'APR': (
+      <div>
+        <p className="font-semibold mb-1">APR (Annual Percentage Rate)</p>
+        <p>Taxa de retorno anualizada da posição.</p>
+        <p className="mt-1">Cálculo:</p>
+        <ol className="list-decimal list-inside mt-1 ml-2 text-xs">
+          <li>PNL = Liq. Atual + Coletado - Investido</li>
+          <li>Dias = Tempo desde a criação da posição</li>
+          <li>Taxa diária = (PNL / Investido) / Dias</li>
+          <li>APR Diário = Taxa diária × 100%</li>
+          <li>APR Mensal = Taxa diária × 30 × 100%</li>
+          <li>APR Anual = Taxa diária × 365 × 100%</li>
+        </ol>
+      </div>
+    ),
+    'Range': (
+      <div>
+        <p className="font-semibold mb-1">Range de Preço</p>
+        <p>Intervalo de preço em que a posição fornece liquidez.</p>
+        <p className="mt-1 text-xs">Barra preta: preço de entrada</p>
+        <p className="text-xs">Barra verde (se rastreado): preço atual</p>
+        <p className="mt-1 text-xs">Passe o mouse sobre a barra para ver detalhes.</p>
+      </div>
+    ),
+    'Criado': (
+      <div>
+        <p className="font-semibold mb-1">Data de Criação</p>
+        <p>Data e hora em que a posição foi criada.</p>
+        <p className="mt-1 text-xs">Formato: data local + tempo decorrido</p>
+        <p className="text-xs">Para posições fechadas: tempo fixo em "XX dias"</p>
+      </div>
+    ),
+    'Ações': (
+      <div>
+        <p className="font-semibold mb-1">Ações</p>
+        <p>Operações disponíveis para esta posição:</p>
+        <ul className="list-disc list-inside mt-1 ml-2 text-xs">
+          <li>Editar: modificar detalhes da posição</li>
+          <li>Duplicar: criar cópia da posição</li>
+          <li>Fechar/Restaurar: mover entre posições abertas/fechadas</li>
+          <li>Excluir: remover permanentemente</li>
+        </ul>
+      </div>
+    )
+  };
 
-      <div className="overflow-x-auto">
+  return (
+    <div className="bg-white dark:bg-[#18181b] rounded-xl p-3 sm:p-4 md:p-6 w-full mt-4 border border-gray-300 dark:border-[#232328] shadow-sm">
+      {/* Visualização de tabela para desktop */}
+      <div className="overflow-x-auto sm:block hidden">
         <table className="min-w-full text-sm text-gray-500 dark:text-[#a1a1aa]">
-          <thead>
+          <thead className="hidden sm:table-header-group">
             <tr className="border-b border-gray-300 dark:border-[#232328] text-center">
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Pool</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Investido</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Liq. Atual</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Não Coletado</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Coletado</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">PNL</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">APR (D/M/A)</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Range</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Criado</th>
-              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">Ações</th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Pool</span>
+                  <Tooltip content={columnTooltips['Pool']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Investido</span>
+                  <Tooltip content={columnTooltips['Investido']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Liq. Atual</span>
+                  <Tooltip content={columnTooltips['Liq. Atual']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Não Coletado</span>
+                  <Tooltip content={columnTooltips['Não Coletado']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Coletado</span>
+                  <Tooltip content={columnTooltips['Coletado']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>PNL</span>
+                  <Tooltip content={columnTooltips['PNL']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>APR (D/M/A)</span>
+                  <Tooltip content={columnTooltips['APR']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Range</span>
+                  <Tooltip content={columnTooltips['Range']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Criado</span>
+                  <Tooltip content={columnTooltips['Criado']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
+              <th className="py-3 px-2 font-semibold text-center text-base text-black dark:text-white">
+                <div className="flex items-center justify-center gap-1">
+                  <span>Ações</span>
+                  <Tooltip content={columnTooltips['Ações']} position="top">
+                    <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+                  </Tooltip>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -89,7 +247,7 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
               </tr>
             ) : (
               positions.map((p, idx) => (
-                <tr key={idx} className="border-b border-gray-300 dark:border-[#232328] text-center">
+                <tr key={idx} className="border-b border-gray-300 dark:border-[#232328] text-center flex flex-col sm:table-row mb-6 sm:mb-0">
                   <td className="py-2 px-2 text-center">
                     <div className="font-semibold text-black dark:text-white">{p.pool}</div>
                     <div className="flex items-center">
@@ -101,8 +259,22 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       </div>
                     </div>
                   </td>
-                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal">${p.invested.toFixed(2)}</td>
-                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'current', value: p.current })}>
+                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal flex flex-col sm:table-cell">
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Investido</span>
+                      <Tooltip content={columnTooltips['Investido']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
+                    ${p.invested.toFixed(2)}
+                  </td>
+                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer flex flex-col sm:table-cell" onClick={() => setEditingCell({ row: idx, field: 'current', value: p.current })}>
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Liq. Atual</span>
+                      <Tooltip content={columnTooltips['Liq. Atual']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
                     {editingCell && editingCell.row === idx && editingCell.field === 'current' ? (
                       <input
                         type="number"
@@ -117,7 +289,13 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       `$${p.current.toFixed(2)}`
                     )}
                   </td>
-                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
+                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer flex flex-col sm:table-cell" onClick={() => setEditingCell({ row: idx, field: 'uncollected', value: p.uncollected })}>
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Não Coletado</span>
+                      <Tooltip content={columnTooltips['Não Coletado']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
                     {editingCell && editingCell.row === idx && editingCell.field === 'uncollected' ? (
                       <input
                         type="number"
@@ -132,7 +310,13 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       `$${p.uncollected.toFixed(2)}`
                     )}
                   </td>
-                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
+                  <td className="py-2 px-2 text-center text-base text-black dark:text-white font-normal cursor-pointer flex flex-col sm:table-cell" onClick={() => setEditingCell({ row: idx, field: 'collected', value: p.collected })}>
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Coletado</span>
+                      <Tooltip content={columnTooltips['Coletado']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
                     {editingCell && editingCell.row === idx && editingCell.field === 'collected' ? (
                       <input
                         type="number"
@@ -147,8 +331,22 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       `$${p.collected.toFixed(2)}`
                     )}
                   </td>
-                  <td className={`py-2 px-2 text-center text-base font-normal ${Number(calcPNL(p)) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}><span className="text-xs align-top mr-0.5 text-gray-400 dark:text-[#a1a1aa]">$</span><span>{calcPNL(p)}</span></td>
-                  <td className="py-2 px-2 text-center whitespace-nowrap">
+                  <td className={`py-2 px-2 text-center text-base font-normal flex flex-col sm:table-cell ${Number(calcPNL(p)) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">PNL</span>
+                      <Tooltip content={columnTooltips['PNL']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
+                    <span className="text-xs align-top mr-0.5 text-gray-400 dark:text-[#a1a1aa]">$</span><span>{calcPNL(p)}</span>
+                  </td>
+                  <td className="py-2 px-2 text-center whitespace-nowrap flex flex-col sm:table-cell">
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">APR</span>
+                      <Tooltip content={columnTooltips['APR']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
                     {(() => {
                       const apr = calcAPR(p);
                       return (
@@ -207,12 +405,39 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                       </div>
                     </div>
                   </td>
-                  <td className="py-2 px-2 text-center">
-                    <div className="text-black dark:text-white">{new Date(p.created).toLocaleString()}</div>
+                  <td className="py-2 px-2 text-center flex flex-col sm:table-cell">
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Criado</span>
+                      <Tooltip content={columnTooltips['Criado']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
+                    <div className="text-black dark:text-white">{new Date(p.created).toLocaleDateString()}</div>
                     <div className="text-[10px] text-gray-500 dark:text-[#a1a1aa]">{formatAgo(p.created, closed)}</div>
                   </td>
-                  <td className="py-2 px-2 flex gap-2 justify-center items-center">
-                    {!closed && !('isTracked' in p) && (
+                  <td className="py-2 px-2 flex flex-col sm:table-cell">
+                    <div className="sm:hidden flex justify-between items-center mb-1">
+                      <span className="font-semibold text-black dark:text-white text-sm">Ações</span>
+                      <Tooltip content={columnTooltips['Ações']} position="left">
+                        <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a]" />
+                      </Tooltip>
+                    </div>
+                    <div className="flex gap-2 justify-center items-center">
+                      {/* Link para a pool original */}
+                      {p.poolUrl && (
+                        <a 
+                          href={p.poolUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          title="Abrir link da pool" 
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-[#232328] rounded"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                        </a>
+                      )}
+                      {!closed && !('isTracked' in p) && (
                       <>
                         {closed ? (
                           <button title="Restaurar" className="p-1 hover:bg-gray-200 dark:hover:bg-[#232328] rounded" onClick={() => onRestore && onRestore(idx)}>
@@ -253,12 +478,43 @@ export function PositionsTable({ positions, onRemove, onClosePosition, onDuplica
                     <button title="Excluir" onClick={() => onRemove(idx)} className="p-1 hover:bg-[#232328] rounded">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Visualização de cards para mobile */}
+      <div className="sm:hidden space-y-4">
+        {positions.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-[#71717a]">
+            Nenhuma posição encontrada. Adicione uma posição manualmente usando o botão "Adicionar Posição".
+          </div>
+        ) : (
+          positions.map((p, idx) => (
+            <MobilePositionCard
+              key={idx}
+              position={p}
+              index={idx}
+              closed={closed}
+              onRemove={onRemove}
+              onClosePosition={onClosePosition}
+              onDuplicate={onDuplicate}
+              onEdit={onEdit}
+              onRestore={onRestore}
+              editingCell={editingCell}
+              setEditingCell={setEditingCell}
+              handleInlineSave={handleInlineSave}
+              calcPNL={calcPNL}
+              calcAPR={calcAPR}
+              formatAgo={formatAgo}
+              tooltips={columnTooltips}
+            />
+          ))
+        )}
       </div>
     </div>
   );

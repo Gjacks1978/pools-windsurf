@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Position } from "./AddPositionModal";
+import { Tooltip } from "./Tooltip";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 type DashboardCardsProps = {
   positions: Position[];
@@ -135,19 +137,84 @@ export function DashboardCards({ positions }: DashboardCardsProps) {
     return card.value;
   }
 
+  // Definir tooltips detalhados para cada card
+  const tooltips = {
+    'Total Valor Atual': (
+      <div>
+        <p className="font-semibold mb-1">Total Valor Atual</p>
+        <p>Soma do valor atual de liquidez de todas as posições abertas.</p>
+        <p className="mt-1">Fórmula: ∑ (Liquidez Atual de cada posição)</p>
+      </div>
+    ),
+    'Total Investido': (
+      <div>
+        <p className="font-semibold mb-1">Total Investido</p>
+        <p>Soma do valor investido inicialmente em todas as posições abertas.</p>
+        <p className="mt-1">Fórmula: ∑ (Valor Investido de cada posição)</p>
+      </div>
+    ),
+    'Taxas Totais': (
+      <div>
+        <p className="font-semibold mb-1">Taxas Totais</p>
+        <p>Soma de todas as taxas coletadas e não coletadas de todas as posições.</p>
+        <p className="mt-1">Fórmula: ∑ (Taxas Coletadas + Taxas Não Coletadas)</p>
+      </div>
+    ),
+    'P&L Total': (
+      <div>
+        <p className="font-semibold mb-1">P&L Total (Profit & Loss)</p>
+        <p>Lucro ou prejuízo total considerando todas as posições abertas.</p>
+        <p className="mt-1">Fórmula: ∑ (Valor Atual + Taxas Coletadas + Taxas Não Coletadas - Valor Investido)</p>
+        <p className="mt-1">P&L positivo indica lucro, negativo indica prejuízo.</p>
+      </div>
+    ),
+    'Rendimento Estimado': (
+      <div>
+        <p className="font-semibold mb-1">Rendimento Estimado</p>
+        <p>Estimativa de rendimento baseada nas taxas acumuladas até o momento.</p>
+        <p className="mt-1">Cálculo:</p>
+        <ol className="list-decimal list-inside mt-1 ml-2 text-xs">
+          <li>Taxa média diária = Taxas Totais ÷ (Investimento × Dias)</li>
+          <li>Rendimento Diário = Taxa média diária × 100%</li>
+          <li>Rendimento Mensal = Rendimento Diário × 30</li>
+          <li>Rendimento Anual = Rendimento Diário × 365</li>
+        </ol>
+      </div>
+    ),
+    'Taxas Estimadas': (
+      <div>
+        <p className="font-semibold mb-1">Taxas Estimadas</p>
+        <p>Projeção de taxas futuras baseada na acumulação atual.</p>
+        <p className="mt-1">Cálculo:</p>
+        <ol className="list-decimal list-inside mt-1 ml-2 text-xs">
+          <li>Taxa diária acumulada = ∑ (Taxas de cada posição ÷ Dias ativos)</li>
+          <li>Taxas Diárias = Taxa diária acumulada</li>
+          <li>Taxas Mensais = Taxa diária acumulada × 30</li>
+          <li>Taxas Anuais = Taxa diária acumulada × 365</li>
+        </ol>
+      </div>
+    )
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 w-full">
       {cards.map((card, i) => (
-        <div key={i} className={`${card.bg} rounded-xl p-4 flex flex-col gap-1 min-w-[160px] relative ${card.selectOptions ? 'pb-12' : ''}`}>
-          <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">{card.title}</span>
-          <span className="text-2xl font-semibold text-black dark:text-white">{renderCardValue(card)}</span>
-          <span className="text-xs text-gray-500 dark:text-[#71717a]">{card.desc}</span>
+        <div key={i} className={`${card.bg} rounded-xl p-3 md:p-4 flex flex-col gap-1 relative ${card.selectOptions ? 'pb-12' : ''}`}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-[#a1a1aa] font-medium">{card.title}</span>
+            <Tooltip content={tooltips[card.title as keyof typeof tooltips]} position="top" width="max-w-[280px]">
+              <InformationCircleIcon className="h-4 w-4 text-gray-400 dark:text-[#71717a] hover:text-gray-600 dark:hover:text-[#a1a1aa] cursor-help" />
+            </Tooltip>
+          </div>
+          <span className="text-xl md:text-2xl font-semibold text-black dark:text-white break-words">{renderCardValue(card)}</span>
+          <span className="text-xs text-gray-500 dark:text-[#71717a] line-clamp-2">{card.desc}</span>
           {card.selectOptions && (
             <div className="absolute bottom-3 right-3">
               <select
                 className="bg-transparent text-xs text-black dark:text-white p-1 rounded border border-gray-300 dark:border-[#232328]"
                 value={card.selectValue}
                 onChange={e => card.setSelect(e.target.value)}
+                aria-label={`Selecionar período para ${card.title}`}
               >
                 {card.selectOptions.map((opt: string) => (
                   <option key={opt}>{opt}</option>
